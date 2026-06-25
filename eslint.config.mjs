@@ -1,0 +1,29 @@
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    // Generated shadcn/ui primitives — not linted as project source.
+    "src/components/ui/**",
+    "src/hooks/use-mobile.ts",
+  ]),
+  {
+    // The namespace-as-contract idiom is intentional throughout the domain lib.
+    rules: {
+      "@typescript-eslint/no-namespace": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+    },
+  },
+]);
+
+export default eslintConfig;

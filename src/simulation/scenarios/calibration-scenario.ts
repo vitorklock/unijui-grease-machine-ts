@@ -1,0 +1,66 @@
+import { Interpolator, PULSE_REGIMES } from "@/lib/grease-machine";
+import type { Calibration } from "@/lib/grease-machine";
+import { GreaseMachineSimulation } from "../grease-machine-simulation";
+
+export interface CalibrationCurvePoint {
+    temperature: number;
+    flow: number;
+    dripShort: number;
+    dripLong: number;
+}
+
+export interface CalibrationScenarioResult {
+    temperatures: number[];
+    points: Calibration.Point[];
+    models: Calibration.TemperatureModel[];
+    curve: CalibrationCurvePoint[];
+}
+
+export const DEFAULT_CALIBRATION_TEMPS = [10, 20, 35];
+
+/** Reference pulse durations for the drip curves (short vs long), in seconds. */
+const SHORT_REF_PULSE = 0.2;
+const LONG_REF_PULSE = 1.4;
+
+/** Calibrate a simulation at the given temperatures (both regimes at each). */
+export async function calibrate(
+    sim: GreaseMachineSimulation,
+    temperatures: number[],
+): Promise<void> {
+    for (const temperature of temperatures) {
+        sim.setTemperature(temperature);
+        for (const regime of PULSE_REGIMES) {
+            sim.resetContainer();
+            await sim.calibrationProcedure().run(regime);
+        }
+    }
+}
+
+export async function runCalibrationScenario(
+    temperatures: number[] = DEFAULT_CALIBRATION_TEMPS,
+): Promise<CalibrationScenarioResult> {
+    const sim = new GreaseMachineSimulation();
+    await calibrate(sim, temperatures);
+
+    const models = Interpolator.buildModels(sim.store);
+    const interp = new Interpolator(sim.store);
+
+    const minT = Math.min(...temperatures);
+    const maxT = Math.max(...temperatures);
+    const span = maxT - minT;
+    const steps = 40;
+
+    const curve: CalibrationCurvePoint[] = [];
+    for (let i = 0; i <= steps; i++) {
+        const temperature = span === 0 ? minT : minT + (span * i) / steps;
+        curve.push({
+            temperature,
+            flow: interp.flowRate(temperature),
+            dripShort: interp.drip(temperature, SHORT_REF_PULSE),
+            dripLong: interp.drip(temperature, LONG_REF_PULSE),
+        });
+        if (span === 0) break;
+    }
+
+    return { temperatures, points: sim.store.toJSON(), models, curve };
+}
