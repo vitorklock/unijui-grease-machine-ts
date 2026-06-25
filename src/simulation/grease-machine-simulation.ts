@@ -2,8 +2,9 @@ import {
     CalibrationProcedure,
     CalibrationStore,
     createController,
+    PULSE_REGIMES,
 } from "@/lib/grease-machine";
-import type { Clock, Controller, Hardware } from "@/lib/grease-machine";
+import type { Calibration, Clock, Controller, Hardware } from "@/lib/grease-machine";
 import { ManualClock } from "./clock";
 import { GreasePhysicsModel, type PhysicsConfig } from "./physics";
 import {
@@ -84,6 +85,35 @@ export class GreaseMachineSimulation {
             store: this.store,
             clock: this.clock,
         });
+    }
+
+    /**
+     * Calibrate both pulse regimes at a temperature and add the points to this
+     * simulation's store. Runs on an isolated instant clock, so it completes
+     * immediately even when the live machine is driven by a real-time clock.
+     */
+    async calibrateAt(temperature: number): Promise<Calibration.Point[]> {
+        const clock = new ManualClock();
+        const thermometer = new SimulatedThermometer(temperature);
+        const motor = new SimulatedMotor(clock);
+        const scale = new SimulatedScale(motor, thermometer, this.physics, clock);
+        const procedure = new CalibrationProcedure({
+            devices: { motor, scale, thermometer },
+            store: this.store,
+            clock,
+        });
+
+        const points: Calibration.Point[] = [];
+        for (const regime of PULSE_REGIMES) {
+            motor.reset();
+            points.push(await procedure.run(regime));
+        }
+        return points;
+    }
+
+    /** Discard all calibration data. */
+    clearCalibration(): void {
+        this.store.clear();
     }
 
     snapshot(): SimulationSnapshot {
