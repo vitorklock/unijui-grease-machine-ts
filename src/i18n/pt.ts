@@ -99,6 +99,13 @@ export const pt: Messages = {
     colDrip: "Escoam.",
     regimeShort: "curto",
     regimeLong: "longo",
+    fitTitle: "Modelo de vazão",
+    fitSubtitle:
+      "Vazão medida em cada temperatura calibrada, e a curva que o interpolador selecionado traça entre elas.",
+    fitInterpLegend: "vazão interpolada",
+    fitMeasuredLegend: "pontos de calibração",
+    fitFlowUnit: "g/s",
+    fitHint: "Calibre ao menos duas temperaturas para ver a interpolação.",
   },
   oil: {
     pickerLabel: "Perfil de óleo",

@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
+import { CalibrationFitChart } from "./charts/calibration-fit-chart";
 import { useMachine, useSnapshot } from "./machine-context";
 
 const QUICK_TEMPS = [10, 20, 28, 35, 40];
@@ -134,6 +135,10 @@ export function CalibrationPanel() {
           )}
         </CardContent>
       </Card>
+
+      <div className="lg:col-span-2">
+        <CalibrationFitChart />
+      </div>
     </div>
   );
 }

@@ -97,6 +97,13 @@ export const en = {
     colDrip: "Drip",
     regimeShort: "short",
     regimeLong: "long",
+    fitTitle: "Flow model",
+    fitSubtitle:
+      "Measured flow at each calibrated temperature, and the curve the selected interpolator draws between them.",
+    fitInterpLegend: "interpolated flow",
+    fitMeasuredLegend: "calibration points",
+    fitFlowUnit: "g/s",
+    fitHint: "Calibrate at least two temperatures to see the interpolation.",
   },
   oil: {
     pickerLabel: "Oil profile",
