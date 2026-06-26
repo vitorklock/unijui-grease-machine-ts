@@ -1,6 +1,6 @@
 "use client";
 
-import { Droplet, Hand, Pause, Play, RotateCcw, Zap } from "lucide-react";
+import { Droplet, Gauge, Hand, Pause, Play, RotateCcw, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,12 +15,10 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { ControllerSelector } from "./controller-selector";
-import { useMachine } from "./machine-context";
+import { SPEED_OPTIONS, useMachine } from "./machine-context";
 
 const g = (n: number) => `${n.toFixed(3)} g`;
 const s = (n: number) => `${n.toFixed(3)} s`;
-const sliderValue = (v: number | readonly number[]) =>
-  Array.isArray(v) ? v[0] : (v as number);
 
 export function OperatePanel() {
   const m = useMachine();
@@ -58,8 +56,8 @@ export function OperatePanel() {
               min={5}
               max={40}
               step={1}
-              value={m.temperature}
-              onValueChange={(v) => m.setTemperature(sliderValue(v))}
+              value={[m.temperature]}
+              onValueChange={(v) => m.setTemperature(v[0])}
             />
             <div className="mt-1 flex justify-between text-xs text-muted-foreground">
               <span>5 °C</span>
@@ -101,6 +99,32 @@ export function OperatePanel() {
                   ? "calibrated"
                   : `needs calibration (${m.snapshot.completeTemperatures.length}/2 temps)`}
               </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Gauge className="size-4" /> Simulation speed
+            </CardTitle>
+            <CardDescription>
+              A real micro-dosing pump is slow, so the demo compresses wall-clock
+              time. Motor on-times shown are real-machine seconds.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-1.5">
+              {SPEED_OPTIONS.map((sp) => (
+                <Button
+                  key={sp}
+                  size="sm"
+                  variant={sp === m.speed ? "default" : "outline"}
+                  onClick={() => m.setSpeed(sp)}
+                >
+                  {sp}×
+                </Button>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -207,6 +231,9 @@ function AutomaticControls() {
             disabled={m.running || !m.snapshot.ready}
           >
             Dispense one pulse
+          </Button>
+          <Button variant="secondary" onClick={m.restart}>
+            <RotateCcw className="size-4" /> Restart
           </Button>
         </div>
 

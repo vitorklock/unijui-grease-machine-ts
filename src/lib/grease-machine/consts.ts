@@ -18,8 +18,9 @@ export const STABLE_TOLERANCE_G = 0.1;
 /** Weight must hold within tolerance this long to count as stabilized, in seconds. */
 export const STABLE_WINDOW_S = 15;
 
-/** Poll interval for the calibration scale loops, in seconds (fine, for accuracy). */
-export const POLL_S = 0.001;
+/** Poll interval for the calibration scale loops, in seconds. Fine enough that
+ *  the per-poll overshoot (flow x POLL_S) stays well under the scale tolerance. */
+export const POLL_S = 0.02;
 
 /** Safety cap on how long to wait for the drip to settle, in seconds. */
 export const STABILIZATION_TIMEOUT_S = 120;

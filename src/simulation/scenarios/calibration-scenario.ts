@@ -16,11 +16,14 @@ export interface CalibrationScenarioResult {
     curve: CalibrationCurvePoint[];
 }
 
-export const DEFAULT_CALIBRATION_TEMPS = [10, 20, 35];
+// The real viscosity-temperature curve is steep (~5 %/degC), so a few extra
+// calibration points keep the linear interpolation tight across the range.
+export const DEFAULT_CALIBRATION_TEMPS = [10, 16, 22, 28, 34, 40];
 
-/** Reference pulse durations for the drip curves (short vs long), in seconds. */
-const SHORT_REF_PULSE = 0.2;
-const LONG_REF_PULSE = 1.4;
+/** Reference pulse durations for the drip curves (short vs long), in seconds,
+ *  representative of a small (~2 g) and a large (~30 g) dose at this flow. */
+const SHORT_REF_PULSE = 10;
+const LONG_REF_PULSE = 150;
 
 /** Calibrate a simulation at the given temperatures (both regimes at each). */
 export async function calibrate(

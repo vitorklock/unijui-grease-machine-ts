@@ -10,8 +10,12 @@ import {
 } from "react";
 import type { Calibration, Controller, DispenseResult } from "@/lib/grease-machine";
 import {
+  DEFAULT_OIL_PROFILE_ID,
   GreaseMachineSimulation,
+  OIL_PROFILE_LIST,
+  OIL_PROFILES,
   SystemClock,
+  type OilProfile,
   type SimulationSnapshot,
 } from "@/simulation";
 
@@ -19,24 +23,29 @@ export interface DispenseEntry extends DispenseResult {
   id: number;
 }
 
+/** Demo speeds: how many virtual seconds pass per wall-clock second. */
+export const SPEED_OPTIONS = [1, 10, 25, 50, 100];
+const DEFAULT_SPEED = 25;
+const INITIAL_TEMP = 22;
+
 interface MachineContextValue {
   snapshot: SimulationSnapshot;
-  // ambient temperature
   temperature: number;
   setTemperature: (t: number) => void;
-  // calibration
+  oil: OilProfile;
+  oils: OilProfile[];
+  setOil: (id: string) => void;
+  speed: number;
+  setSpeed: (s: number) => void;
   points: Calibration.Point[];
   calibrating: boolean;
   calibrateAt: (t: number) => Promise<void>;
   clearCalibration: () => void;
-  // controller selection
   controllerKey: Controller.Key;
   setControllerKey: (k: Controller.Key) => void;
-  // manual
   manualOn: () => void;
   manualOff: () => void;
   tare: () => void;
-  // automatic
   massPerPulse: number;
   setMassPerPulse: (n: number) => void;
   intervalSeconds: number;
@@ -45,7 +54,7 @@ interface MachineContextValue {
   dispenseOne: () => Promise<void>;
   startAuto: () => void;
   stopAuto: () => void;
-  // feedback
+  restart: () => void;
   log: DispenseEntry[];
   clearLog: () => void;
   error: string | null;
@@ -63,19 +72,31 @@ function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
+interface Machine {
+  sim: GreaseMachineSimulation;
+  clock: SystemClock;
+}
+
+function buildMachine(oilId: string, temperature: number, speed: number): Machine {
+  const clock = new SystemClock(speed);
+  const sim = new GreaseMachineSimulation({
+    physics: OIL_PROFILES[oilId].physics,
+    clock,
+    ambientTemp: temperature,
+  });
+  return { sim, clock };
+}
+
 export function MachineProvider({ children }: { children: React.ReactNode }) {
-  // Held in state (created once) rather than a ref, so it is a stable value we
-  // can safely read during render.
-  const [sim] = useState(
-    () =>
-      new GreaseMachineSimulation({
-        clock: new SystemClock(1),
-        ambientTemp: 22,
-      }),
+  const [oilId, setOilId] = useState(DEFAULT_OIL_PROFILE_ID);
+  const [speed, setSpeedState] = useState(DEFAULT_SPEED);
+  const [temperature, setTemperatureState] = useState(INITIAL_TEMP);
+  const [machine, setMachine] = useState<Machine>(() =>
+    buildMachine(DEFAULT_OIL_PROFILE_ID, INITIAL_TEMP, DEFAULT_SPEED),
   );
+  const { sim, clock } = machine;
 
   const [snapshot, setSnapshot] = useState<SimulationSnapshot>(() => sim.snapshot());
-  const [temperature, setTemperatureState] = useState(22);
   const [points, setPoints] = useState<Calibration.Point[]>([]);
   const [calibrating, setCalibrating] = useState(false);
   const [controllerKey, setControllerKey] = useState<Controller.Key>("automatic");
@@ -103,6 +124,25 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     const setTemperature = (t: number) => {
       sim.setTemperature(t);
       setTemperatureState(t);
+    };
+
+    const setOil = (id: string) => {
+      if (id === oilId) return;
+      // Switching fluid invalidates calibration — rebuild a fresh machine.
+      stopRef.current = true;
+      const next = buildMachine(id, temperature, speed);
+      setMachine(next);
+      setOilId(id);
+      setPoints([]);
+      setLog([]);
+      setRunning(false);
+      setError(null);
+      setSnapshot(next.sim.snapshot());
+    };
+
+    const setSpeed = (s: number) => {
+      clock.setTimeScale(s);
+      setSpeedState(s);
     };
 
     const calibrateAt = async (t: number) => {
@@ -188,10 +228,26 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
       setRunning(false);
     };
 
+    // Stop any cycle and start a fresh operation session: empty the container and
+    // clear the pulse log. Calibration and the selected oil are kept.
+    const restart = () => {
+      stopRef.current = true;
+      setRunning(false);
+      sim.resetContainer();
+      setLog([]);
+      setError(null);
+      setSnapshot(sim.snapshot());
+    };
+
     return {
       snapshot,
       temperature,
       setTemperature,
+      oil: OIL_PROFILES[oilId],
+      oils: OIL_PROFILE_LIST,
+      setOil,
+      speed,
+      setSpeed,
       points,
       calibrating,
       calibrateAt,
@@ -209,12 +265,16 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
       dispenseOne,
       startAuto,
       stopAuto,
+      restart,
       log,
       clearLog: () => setLog([]),
       error,
     };
   }, [
     sim,
+    clock,
+    oilId,
+    speed,
     snapshot,
     temperature,
     points,

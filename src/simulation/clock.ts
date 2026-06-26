@@ -1,18 +1,38 @@
 import type { Clock } from "@/lib/grease-machine";
 
 /**
- * Real-time clock for the live UI. `timeScale > 1` makes waits complete faster
- * (e.g. to fast-forward the long inter-pulse interval during a demo).
+ * Real-time clock for the live UI. `timeScale > 1` runs virtual time faster than
+ * the wall clock so a realistic (slow) machine is watchable: both now() and
+ * sleep() are scaled together, so motor on-time and drip settling stay
+ * physically consistent (the motor still "runs" the full virtual duration, the
+ * demo just compresses the wall-clock wait).
  */
 export class SystemClock implements Clock {
-    constructor(private readonly timeScale = 1) { }
+    private origin = performance.now();
+    private scale: number;
+
+    constructor(timeScale = 1) {
+        this.scale = timeScale;
+    }
+
+    get timeScale(): number {
+        return this.scale;
+    }
+
+    /** Change the demo speed while keeping virtual time continuous (no jump). */
+    setTimeScale(timeScale: number): void {
+        const real = performance.now();
+        const virtualNow = ((real - this.origin) / 1000) * this.scale;
+        this.origin = real - (virtualNow / timeScale) * 1000;
+        this.scale = timeScale;
+    }
 
     now(): number {
-        return performance.now() / 1000;
+        return ((performance.now() - this.origin) / 1000) * this.scale;
     }
 
     sleep(seconds: number): Promise<void> {
-        const ms = (Math.max(0, seconds) / this.timeScale) * 1000;
+        const ms = (Math.max(0, seconds) / this.scale) * 1000;
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }

@@ -4,6 +4,7 @@
  * Imports the control library; the library never imports the simulation.
  */
 export * from "./physics";
+export * from "./oils";
 export * from "./clock";
 export * from "./hardware";
 export * from "./grease-machine-simulation";

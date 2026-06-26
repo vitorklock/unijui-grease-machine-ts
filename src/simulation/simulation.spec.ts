@@ -13,13 +13,13 @@ describe("GreaseMachineSimulation", () => {
         expect(sim.store.completeTemperatures()).toEqual([10, 20, 35]);
 
         const interp = new Interpolator(sim.store);
-        expect(interp.flowRate(20)).toBeCloseTo(20, 1);
+        expect(interp.flowRate(20)).toBeCloseTo(0.2, 2);
         expect(interp.flowRate(10)).toBeLessThan(interp.flowRate(35));
     });
 
     it("dispenses within a small, consistent error at calibrated and intermediate temps", async () => {
         const sim = new GreaseMachineSimulation();
-        await calibrate(sim, [10, 20, 35]);
+        await calibrate(sim, [10, 16, 22, 28, 34, 40]);
         const interp = new Interpolator(sim.store);
 
         for (const temperature of [20, 25]) {
@@ -35,7 +35,7 @@ describe("GreaseMachineSimulation", () => {
 
     it("full device path: an automatic pulse delivers ~target after settling", async () => {
         const sim = new GreaseMachineSimulation();
-        await calibrate(sim, [10, 20, 35]);
+        await calibrate(sim, [10, 16, 22, 28, 34, 40]);
         sim.setTemperature(25);
         sim.resetContainer();
 

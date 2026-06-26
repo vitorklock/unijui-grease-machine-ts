@@ -1,10 +1,21 @@
 /**
- * Physics model of a thin, low-viscosity drip oil — the simulation's source of
- * truth. Flow rises with temperature; the steady (long-pulse) drip falls with
+ * Physics model of a thin, low-viscosity drip oil (the simulation's source of
+ * truth). Flow rises with temperature; the steady (long-pulse) drip falls with
  * temperature; and drip loads up over the pulse duration toward that steady
- * limit. Parameters are chosen for realistic, monotone, smooth behaviour in the
- * thin-oil regime — not to reproduce any external table. The calibration
- * procedure samples this model; the controller never sees it.
+ * limit. The calibration procedure samples this model; the controller never
+ * sees it.
+ *
+ * Default parameters are grounded in sourced data for ISO VG 32 light machine/
+ * chain oil in 3 mm ID x 40 cm tubing:
+ *   - flow ~ 1/viscosity (Hagen-Poiseuille); viscosity drops ~5.3 %/degC near
+ *     20 degC (ISO 3448 viscosity-temperature table), so flowCoeff = 0.053 /degC.
+ *   - dripLimit ~ residual film + drainable volume (Bretherton/Landau-Levich),
+ *     ~0.6 g for this geometry; dripCoeff = 0.045 /degC (mid of the mu^(2/3) film
+ *     and mu^1 drain-time temperature dependences).
+ *   - tauLoad ~ tube fill time (volume / flow) ~ 10 s.
+ *   - baseSettle ~ gravity drain time 8*mu*L/(rho*g*R^2) ~ 12 s plus the
+ *     falling-rate drip tail, ~40 s.
+ * See the research note in the repo for derivations and sources.
  */
 export interface PhysicsConfig {
     /** Steady mass flow at the reference temperature, in g/s. */
@@ -23,14 +34,15 @@ export interface PhysicsConfig {
     baseSettle: number;
 }
 
+/** ISO VG 32 light machine/chain oil in 3 mm ID x 40 cm tubing (sourced). */
 export const DEFAULT_PHYSICS: PhysicsConfig = {
-    baseFlow: 20,
+    baseFlow: 0.2,
     referenceTemp: 20,
-    flowCoeff: 0.025,
-    baseDripLimit: 5,
-    dripCoeff: 0.029,
-    baseTauLoad: 0.7,
-    baseSettle: 3,
+    flowCoeff: 0.053,
+    baseDripLimit: 0.6,
+    dripCoeff: 0.045,
+    baseTauLoad: 10,
+    baseSettle: 40,
 };
 
 export class GreasePhysicsModel {
