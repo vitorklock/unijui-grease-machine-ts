@@ -94,7 +94,7 @@ export namespace Calibration {
 }
 
 /** Available calibration interpolation strategies (geometric is the default). */
-export const INTERPOLATOR_KEYS = ["geometric", "linear"] as const;
+export const INTERPOLATOR_KEYS = ["geometric", "arrhenius", "linear"] as const;
 
 export namespace Interpolator {
     export type Key = (typeof INTERPOLATOR_KEYS)[number];

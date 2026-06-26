@@ -1,5 +1,6 @@
 import { INTERPOLATOR_KEYS } from "../../types";
 import type { Calibration, Interpolator, InterpolatorRegistry } from "../../types";
+import { ArrheniusInterpolator } from "./arrhenius-interpolator";
 import { GeometricInterpolator } from "./geometric-interpolator";
 import { LinearInterpolator } from "./linear-interpolator";
 
@@ -20,6 +21,13 @@ export const INTERPOLATORS: { [K in Interpolator.Key]: InterpolatorRegistry.Entr
         description:
             "Interpolates the logarithm of flow and drip linearly over temperature, then exponentiates. Exact for the exp(k·T) physics, so it is near-perfect between calibration points.",
         create: (store) => new GeometricInterpolator(store),
+    },
+    arrhenius: {
+        key: "arrhenius",
+        label: "Arrhenius (1/T)",
+        description:
+            "Interpolates the logarithm of flow and drip against inverse absolute temperature (1/T in kelvin) — the textbook Andrade/Arrhenius viscosity law. The physically-canonical fit for real oils over a wide span.",
+        create: (store) => new ArrheniusInterpolator(store),
     },
     linear: {
         key: "linear",

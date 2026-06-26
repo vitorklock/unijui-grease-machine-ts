@@ -6,6 +6,7 @@ import { INTERPOLATOR_KEYS } from "../../types";
 import type { Calibration } from "../../types";
 import { CalibrationStore } from "../store";
 import {
+    ArrheniusInterpolator,
     createInterpolator,
     GeometricInterpolator,
     INTERPOLATOR_LIST,
@@ -149,6 +150,42 @@ describe("LinearInterpolator", () => {
     it("round-trips exactly at a calibrated temperature", () => {
         const row = ROWS[1]; // 20 °C
         const interp = new LinearInterpolator(buildStore(ROWS));
+        for (const massTarget of [2, 5, 10, 30]) {
+            const t = interp.solveMotorTime({ massTarget, temperature: row.T });
+            const delivered = t * row.flow + dripAt(t, row.L, row.tau);
+            expect(delivered).toBeCloseTo(massTarget, 5);
+        }
+    });
+});
+
+describe("ArrheniusInterpolator", () => {
+    it("recovers the steady flow at calibrated temperatures", () => {
+        const interp = new ArrheniusInterpolator(buildStore(ROWS));
+        expect(interp.flowRate(10)).toBeCloseTo(15.5, 6);
+        expect(interp.flowRate(20)).toBeCloseTo(20.0, 6);
+        expect(interp.flowRate(35)).toBeCloseTo(29.0, 6);
+    });
+
+    it("sits between geometric and linear in accuracy on exponential data", () => {
+        const store = EXP_STORE();
+        const geo = new GeometricInterpolator(store);
+        const arr = new ArrheniusInterpolator(store);
+        const lin = new LinearInterpolator(store);
+
+        const trueFlow = EXP_FLOW(18);
+        const geoErr = Math.abs(geo.flowRate(18) - trueFlow);
+        const arrErr = Math.abs(arr.flowRate(18) - trueFlow);
+        const linErr = Math.abs(lin.flowRate(18) - trueFlow);
+
+        // Geometric is exact here (flow is exp in Celsius); Arrhenius (exp in 1/T)
+        // is a hair off but still far tighter than a straight line.
+        expect(geoErr).toBeLessThan(arrErr);
+        expect(arrErr).toBeLessThan(linErr / 4);
+    });
+
+    it("round-trips exactly at a calibrated temperature", () => {
+        const row = ROWS[1]; // 20 °C
+        const interp = new ArrheniusInterpolator(buildStore(ROWS));
         for (const massTarget of [2, 5, 10, 30]) {
             const t = interp.solveMotorTime({ massTarget, temperature: row.T });
             const delivered = t * row.flow + dripAt(t, row.L, row.tau);

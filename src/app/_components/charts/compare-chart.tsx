@@ -12,7 +12,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -131,12 +130,8 @@ export function CompareChart() {
                   label={{ value: t.compare.target, fontSize: 11, position: "insideTopRight" }}
                 />
                 <Tooltip
-                  formatter={(value, key) => [
-                    `${Number(value).toFixed(2)} g`,
-                    key === "fixed" ? t.compare.fixedAt(data.fixedCalibrationTemp) : name(key as never),
-                  ]}
-                  labelFormatter={(temp) => `${Number(temp).toFixed(1)} °C`}
-                  contentStyle={TOOLTIP_STYLE}
+                  cursor={{ stroke: "var(--border)" }}
+                  content={<ChartTooltip unit="g" digits={2} highlightKey={interpolatorKey} />}
                 />
                 <Line
                   type="monotone"
@@ -167,7 +162,6 @@ export function CompareChart() {
             interpolatorKey={interpolatorKey}
             name={name}
             fixedLabel={t.compare.fixedAt(data.fixedCalibrationTemp)}
-            bestLabel={t.interpolator.best}
           />
         </CardContent>
       </Card>
@@ -203,9 +197,8 @@ export function CompareChart() {
                   label={{ value: t.compare.perfect, fontSize: 11, position: "insideTopRight" }}
                 />
                 <Tooltip
-                  formatter={(value, key) => [`${Number(value).toFixed(3)} %`, name(key as never)]}
-                  labelFormatter={(temp) => `${Number(temp).toFixed(1)} °C`}
-                  contentStyle={TOOLTIP_STYLE}
+                  cursor={{ stroke: "var(--border)" }}
+                  content={<ChartTooltip unit="%" digits={3} highlightKey={interpolatorKey} />}
                 />
                 {data.interpolators.map((s) => (
                   <Line
@@ -264,18 +257,77 @@ export function CompareChart() {
   );
 }
 
+/** One series row in the hover tooltip: swatch + name + value. */
+interface TooltipItem {
+  dataKey?: string | number;
+  name?: string;
+  value?: number | string;
+  color?: string;
+  stroke?: string;
+}
+
+/**
+ * Shared hover tooltip for both compare charts: the temperature, then a colored
+ * swatch, the strategy name, and its value for every line — with the selected
+ * strategy emphasized. (recharts' default content wasn't surfacing the names.)
+ */
+function ChartTooltip({
+  active,
+  label,
+  payload,
+  unit,
+  digits,
+  highlightKey,
+}: {
+  active?: boolean;
+  label?: number | string;
+  payload?: TooltipItem[];
+  unit: string;
+  digits: number;
+  highlightKey: string;
+}) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ ...TOOLTIP_STYLE, padding: "8px 10px" }} className="min-w-36 shadow-md">
+      <div className="mb-1.5 font-medium text-foreground">{Number(label).toFixed(1)} °C</div>
+      <ul className="flex flex-col gap-1">
+        {payload.map((item) => {
+          const selected = String(item.dataKey) === highlightKey;
+          return (
+            <li key={String(item.dataKey)} className="flex items-center gap-2">
+              <span
+                className="size-2 shrink-0 rounded-full"
+                style={{ background: item.color ?? item.stroke }}
+              />
+              <span
+                className={cn(
+                  "text-muted-foreground",
+                  selected && "font-medium text-foreground",
+                )}
+              >
+                {item.name}
+              </span>
+              <span className="ml-auto pl-3 font-medium tabular-nums text-foreground">
+                {Number(item.value).toFixed(digits)} {unit}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function Legend({
   data,
   interpolatorKey,
   name,
   fixedLabel,
-  bestLabel,
 }: {
   data: CompareScenarioResult;
   interpolatorKey: CompareScenarioResult["bestKey"];
   name: (key: CompareScenarioResult["bestKey"]) => string;
   fixedLabel: string;
-  bestLabel: string;
 }) {
   const { t } = useTranslation();
   return (
@@ -292,11 +344,6 @@ function Legend({
               }}
             />
             <span className={cn(selected && "font-medium text-foreground")}>{name(s.key)}</span>
-            {/* {s.key === data.bestKey ? (
-              <Badge variant="secondary" className="px-1.5 py-0 text-[10px] uppercase">
-                {bestLabel}
-              </Badge>
-            ) : null} */}
             <span className="text-muted-foreground">
               {t.compare.meanError(s.meanAbsErrorPct.toFixed(2))}
             </span>
