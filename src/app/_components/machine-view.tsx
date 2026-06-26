@@ -30,8 +30,8 @@ export function MachineView() {
 
   return (
     <MachineProvider>
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-8">
-        <header className="flex flex-col gap-4">
+      <div className="mx-auto flex max-w-[1600px] flex-col gap-6 px-4 py-8 sm:px-8 lg:flex-row lg:gap-8">
+        <aside className="flex shrink-0 flex-col gap-5 lg:sticky lg:top-8 lg:w-72 lg:self-start">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-chart-1">
@@ -39,11 +39,11 @@ export function MachineView() {
               </div>
               <h1 className="text-2xl font-semibold tracking-tight">{t.header.title}</h1>
             </div>
-            <p className="max-w-2xl text-sm text-muted-foreground">{t.header.subtitle}</p>
+            <p className="text-sm text-muted-foreground">{t.header.subtitle}</p>
           </div>
 
-          {/* Controls bar: language + machine settings on the left, export action right-aligned. */}
-          <div className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-xl border bg-card/50 px-3 py-2.5">
+          {/* Settings panel: language + machine config, with the export action below. */}
+          <div className="flex flex-col gap-4 rounded-xl border bg-card/50 p-4">
             <Field label={t.language.label}>
               <LanguageSwitcher />
             </Field>
@@ -53,46 +53,46 @@ export function MachineView() {
             <Field label={t.interpolator.pickerLabel}>
               <InterpolatorSelector />
             </Field>
-            <div className="ml-auto">
-              <ExportButton />
-            </div>
+            <ExportButton className="w-full" />
           </div>
-        </header>
+        </aside>
 
-        <Tabs defaultValue="operate" className="w-full">
-          <TabsList className="w-full justify-start overflow-x-auto">
-            {TAB_VALUES.map((v) => (
-              <TabsTrigger key={v} value={v}>
-                {t.tabs[v]}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+        <main className="min-w-0 flex-1">
+          <Tabs defaultValue="operate" className="w-full">
+            <TabsList className="w-full justify-start overflow-x-auto">
+              {TAB_VALUES.map((v) => (
+                <TabsTrigger key={v} value={v}>
+                  {t.tabs[v]}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          <TabsContent value="operate" className="pt-4">
-            <OperatePanel />
-          </TabsContent>
-          <TabsContent value="calibrate" className="pt-4">
-            <CalibrationPanel />
-          </TabsContent>
-          <TabsContent value="oil" className="pt-4">
-            <OilInfo />
-          </TabsContent>
-          <TabsContent value="curves" className="pt-4">
-            <CalibrationCurves />
-          </TabsContent>
-          <TabsContent value="accuracy" className="pt-4">
-            <AccuracyChart />
-          </TabsContent>
-          <TabsContent value="compare" className="pt-4">
-            <CompareChart />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="operate" className="pt-4">
+              <OperatePanel />
+            </TabsContent>
+            <TabsContent value="calibrate" className="pt-4">
+              <CalibrationPanel />
+            </TabsContent>
+            <TabsContent value="oil" className="pt-4">
+              <OilInfo />
+            </TabsContent>
+            <TabsContent value="curves" className="pt-4">
+              <CalibrationCurves />
+            </TabsContent>
+            <TabsContent value="accuracy" className="pt-4">
+              <AccuracyChart />
+            </TabsContent>
+            <TabsContent value="compare" className="pt-4">
+              <CompareChart />
+            </TabsContent>
+          </Tabs>
+        </main>
       </div>
     </MachineProvider>
   );
 }
 
-/** A labelled control in the machine settings bar: tiny caption above the input. */
+/** A labelled control in the sidebar settings panel: tiny caption above the input. */
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">

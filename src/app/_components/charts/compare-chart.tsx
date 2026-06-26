@@ -292,11 +292,11 @@ function Legend({
               }}
             />
             <span className={cn(selected && "font-medium text-foreground")}>{name(s.key)}</span>
-            {s.key === data.bestKey ? (
+            {/* {s.key === data.bestKey ? (
               <Badge variant="secondary" className="px-1.5 py-0 text-[10px] uppercase">
                 {bestLabel}
               </Badge>
-            ) : null}
+            ) : null} */}
             <span className="text-muted-foreground">
               {t.compare.meanError(s.meanAbsErrorPct.toFixed(2))}
             </span>

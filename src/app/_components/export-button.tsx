@@ -8,10 +8,11 @@ import { useMachine } from "./machine-context";
 interface Props {
   variant?: "outline" | "ghost" | "secondary";
   size?: "sm" | "default";
+  className?: string;
 }
 
 /** Downloads the full machine state (oil, calibration, settings, pulse log) as JSON. */
-export function ExportButton({ variant = "outline", size = "sm" }: Props) {
+export function ExportButton({ variant = "outline", size = "sm", className }: Props) {
   const { exportData } = useMachine();
   const { t } = useTranslation();
 
@@ -30,7 +31,7 @@ export function ExportButton({ variant = "outline", size = "sm" }: Props) {
   };
 
   return (
-    <Button variant={variant} size={size} onClick={onExport}>
+    <Button variant={variant} size={size} className={className} onClick={onExport}>
       <Download className="size-4" /> {t.header.export}
     </Button>
   );

@@ -23,13 +23,13 @@ export function InterpolatorSelector() {
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-2">
-      <Spline className="size-4 text-muted-foreground" />
+    <div className="flex w-full items-center gap-2">
+      <Spline className="size-4 shrink-0 text-muted-foreground" />
       <Select
         value={interpolatorKey}
         onValueChange={(v) => setInterpolator(v as typeof interpolatorKey)}
       >
-        <SelectTrigger className="w-[190px]" aria-label={t.interpolator.pickerLabel}>
+        <SelectTrigger className="w-auto min-w-0 flex-1" aria-label={t.interpolator.pickerLabel}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent position="popper" align="start">

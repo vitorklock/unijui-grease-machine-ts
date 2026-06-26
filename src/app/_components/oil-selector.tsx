@@ -17,10 +17,10 @@ export function OilSelector() {
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-2">
-      <Beaker className="size-4 text-muted-foreground" />
+    <div className="flex w-full items-center gap-2">
+      <Beaker className="size-4 shrink-0 text-muted-foreground" />
       <Select value={oil.id} onValueChange={setOil}>
-        <SelectTrigger className="w-[200px]" aria-label={t.oil.pickerLabel}>
+        <SelectTrigger className="w-auto min-w-0 flex-1" aria-label={t.oil.pickerLabel}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent position="popper" align="start" className="max-h-72">
