@@ -51,6 +51,25 @@ describe("Interpolator", () => {
         expect(interp.flowRate(35)).toBeCloseTo(29.0, 6);
     });
 
+    it("interpolates flow geometrically — near-exact for exponential data", () => {
+        // Flow that is a pure exponential in temperature (Arrhenius).
+        const flowAt = (T: number) => 0.2 * Math.exp(0.053 * (T - 20));
+        const interp = new Interpolator(
+            buildStore([10, 20, 35].map((T) => ({ T, flow: flowAt(T), L: 0.6, tau: 10 }))),
+        );
+
+        // 18 °C sits inside the 10 °C gap between calibration points.
+        const trueFlow = flowAt(18);
+        const linear = flowAt(10) + (8 / 10) * (flowAt(20) - flowAt(10));
+
+        // Geometric interpolation recovers the exponential almost exactly...
+        expect(interp.flowRate(18)).toBeCloseTo(trueFlow, 5);
+        // ...far closer than a straight-line interpolation would be.
+        expect(Math.abs(interp.flowRate(18) - trueFlow)).toBeLessThan(
+            Math.abs(linear - trueFlow) / 20,
+        );
+    });
+
     it("round-trips exactly at a calibrated temperature", () => {
         const row = ROWS[1]; // 20 °C
         const interp = new Interpolator(buildStore(ROWS));

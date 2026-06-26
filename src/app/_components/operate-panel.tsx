@@ -226,14 +226,17 @@ function AutomaticControls() {
               <Pause className="size-4" /> {t.operate.stopCycle}
             </Button>
           ) : (
-            <Button onClick={m.startAuto} disabled={!m.snapshot.ready}>
+            <Button
+              onClick={m.startAuto}
+              disabled={!m.snapshot.ready || m.dispensing}
+            >
               <Play className="size-4" /> {t.operate.startCycle}
             </Button>
           )}
           <Button
             variant="outline"
             onClick={m.dispenseOne}
-            disabled={m.running || !m.snapshot.ready}
+            disabled={m.running || m.dispensing || !m.snapshot.ready}
           >
             {t.operate.dispenseOne}
           </Button>

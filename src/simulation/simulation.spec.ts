@@ -28,7 +28,7 @@ describe("GreaseMachineSimulation", () => {
                 const delivered =
                     t * sim.physics.flowRate(temperature) + sim.physics.drip(temperature, t);
                 const errorPct = Math.abs((delivered - massTarget) / massTarget) * 100;
-                expect(errorPct).toBeLessThan(3);
+                expect(errorPct).toBeLessThan(1);
             }
         }
     });
@@ -45,7 +45,7 @@ describe("GreaseMachineSimulation", () => {
         const delivered = sim.scale.readWeight();
 
         expect(result.motorOnTime).toBeGreaterThan(0);
-        expect(Math.abs(delivered - 5)).toBeLessThan(0.25);
+        expect(Math.abs(delivered - 5)).toBeLessThan(0.1);
     });
 
     it("manual controller drives the motor directly", () => {
@@ -64,7 +64,7 @@ describe("scenarios", () => {
         const result = await runAccuracyScenario(25);
         expect(result.results).toHaveLength(4);
         for (const row of result.results) {
-            expect(Math.abs(row.errorPct)).toBeLessThan(3);
+            expect(Math.abs(row.errorPct)).toBeLessThan(1);
         }
     });
 
@@ -78,7 +78,7 @@ describe("scenarios", () => {
         expect(Math.abs(hottest.fixedErrorPct)).toBeGreaterThan(10);
         // ...while the compensated controller stays tight everywhere.
         for (const row of result.rows) {
-            expect(Math.abs(row.compensatedErrorPct)).toBeLessThan(3);
+            expect(Math.abs(row.compensatedErrorPct)).toBeLessThan(1);
         }
     });
 });

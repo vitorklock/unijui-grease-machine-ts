@@ -12,18 +12,25 @@ import type { Calibration } from "../types";
  * The compensated-control core. From the calibration store it builds, per
  * temperature, a steady flow and an exponential drip-loading curve (fitted from
  * the short + long pulse anchors). At runtime it interpolates those parameters
- * **linearly over temperature** and solves the implicit pulse equation
+ * **geometrically over temperature** (linear interpolation of their logarithms,
+ * then exponentiated) and solves the implicit pulse equation
  *
  *     motorOnTime = (massTarget − drip(T, motorOnTime)) / flow(T)
  *
  * by fixed-point iteration (drip depends on the very duration we are solving
  * for). The iteration is a contraction because d(drip)/dt ≪ flow.
+ *
+ * Geometric interpolation is used because flow, the drip limit, and the loading
+ * time constant all vary roughly as exp(k·T) with temperature (Arrhenius). A
+ * straight line over an exponential overshoots on the convex side and leaves a
+ * percent-level bias between calibration points; interpolating in log-space is
+ * exact for a pure exponential and removes almost all of that bias.
  */
 export class Interpolator {
     private readonly temps: number[];
-    private readonly flows: number[];
-    private readonly dripLimits: number[];
-    private readonly tauLoads: number[];
+    private readonly logFlows: number[];
+    private readonly logDripLimits: number[];
+    private readonly logTauLoads: number[];
 
     constructor(store: Calibration.Store) {
         const models = Interpolator.buildModels(store);
@@ -31,9 +38,9 @@ export class Interpolator {
             throw new InsufficientCalibrationError(models.length);
         }
         this.temps = models.map((m) => m.temperature);
-        this.flows = models.map((m) => m.flow);
-        this.dripLimits = models.map((m) => m.dripLimit);
-        this.tauLoads = models.map((m) => m.tauLoad);
+        this.logFlows = models.map((m) => Math.log(m.flow));
+        this.logDripLimits = models.map((m) => Math.log(m.dripLimit));
+        this.logTauLoads = models.map((m) => Math.log(m.tauLoad));
     }
 
     /** Fitted per-temperature models, ascending by temperature. */
@@ -72,13 +79,20 @@ export class Interpolator {
 
     /** Steady mass flow at a temperature, in g/s. */
     flowRate(temperature: number): number {
-        return interp1d(temperature, this.temps, this.flows);
+        return Math.exp(interp1d(temperature, this.temps, this.logFlows));
+    }
+
+    /** Drip-loading parameters (L, τ) at a temperature. */
+    private dripParams(temperature: number): { dripLimit: number; tauLoad: number } {
+        return {
+            dripLimit: Math.exp(interp1d(temperature, this.temps, this.logDripLimits)),
+            tauLoad: Math.exp(interp1d(temperature, this.temps, this.logTauLoads)),
+        };
     }
 
     /** Expected drip for a pulse of the given duration at a temperature, in grams. */
     drip(temperature: number, pulseDuration: number): number {
-        const dripLimit = interp1d(temperature, this.temps, this.dripLimits);
-        const tauLoad = interp1d(temperature, this.temps, this.tauLoads);
+        const { dripLimit, tauLoad } = this.dripParams(temperature);
         return dripAt(pulseDuration, dripLimit, tauLoad);
     }
 
@@ -95,8 +109,7 @@ export class Interpolator {
                 `Non-physical flow (${flow} g/s) at ${temperature} °C — the calibration data looks corrupt.`,
             );
         }
-        const dripLimit = interp1d(temperature, this.temps, this.dripLimits);
-        const tauLoad = interp1d(temperature, this.temps, this.tauLoads);
+        const { dripLimit, tauLoad } = this.dripParams(temperature);
 
         let t = massTarget / flow; // seed ignoring drip (an upper bound on the time)
         for (let i = 0; i < SOLVE_MAX_ITERATIONS; i++) {

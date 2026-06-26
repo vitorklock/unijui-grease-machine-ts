@@ -70,6 +70,7 @@ interface MachineContextValue {
   intervalSeconds: number;
   setIntervalSeconds: (n: number) => void;
   running: boolean;
+  dispensing: boolean;
   dispenseOne: () => Promise<void>;
   startAuto: () => void;
   stopAuto: () => void;
@@ -124,10 +125,12 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
   const [massPerPulse, setMassPerPulse] = useState(5);
   const [intervalSeconds, setIntervalSeconds] = useState(3);
   const [running, setRunning] = useState(false);
+  const [dispensing, setDispensing] = useState(false);
   const [log, setLog] = useState<DispenseEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const stopRef = useRef(false);
+  const busyRef = useRef(false); // a single dispense pulse is in flight
   const logId = useRef(0);
 
   // Keep the live snapshot fresh so the scale animates during pulses.
@@ -207,48 +210,62 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
 
     const dispenseOne = async () => {
       setError(null);
+      if (busyRef.current) return; // a pulse is already in flight — don't overlap
       if (!sim.store.isReady()) {
         setError(t.errors.calibrateTwoAuto);
         return;
       }
+      busyRef.current = true;
+      setDispensing(true);
       sim.resetContainer();
       try {
         pushLog(await sim.controller("automatic").dispense(massPerPulse));
       } catch (e) {
         setError(errorMessage(e));
+      } finally {
+        busyRef.current = false;
+        setDispensing(false);
       }
     };
 
+    // Wait `seconds` of virtual time (scaled by the demo speed), pollable so the
+    // cycle can be stopped promptly.
     const waitInterruptible = (seconds: number) =>
       new Promise<void>((resolve) => {
-        const end = performance.now() + seconds * 1000;
+        const end = performance.now() + (seconds / speed) * 1000;
         const tick = () => {
           if (stopRef.current || performance.now() >= end) return resolve();
-          setTimeout(tick, 80);
+          setTimeout(tick, 50);
         };
         tick();
       });
 
     const startAuto = () => {
       setError(null);
+      if (busyRef.current || running) return; // don't overlap a pulse or another cycle
       if (!sim.store.isReady()) {
         setError(t.errors.calibrateTwoCycle);
         return;
       }
-      if (running) return;
       stopRef.current = false;
       setRunning(true);
 
       void (async () => {
         const auto = sim.controller("automatic");
         while (!stopRef.current) {
+          busyRef.current = true;
+          setDispensing(true);
           sim.resetContainer();
           try {
             pushLog(await auto.dispense(massPerPulse));
           } catch (e) {
             setError(errorMessage(e));
+            busyRef.current = false;
+            setDispensing(false);
             break;
           }
+          busyRef.current = false;
+          setDispensing(false);
           if (stopRef.current) break;
           await waitInterruptible(intervalSeconds);
         }
@@ -307,6 +324,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
       intervalSeconds,
       setIntervalSeconds,
       running,
+      dispensing,
       dispenseOne,
       startAuto,
       stopAuto,
@@ -329,6 +347,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     massPerPulse,
     intervalSeconds,
     running,
+    dispensing,
     log,
     error,
     t,
