@@ -21,12 +21,20 @@ import { useTranslation } from "@/i18n";
 import { useMachine } from "./machine-context";
 
 export function OilInfo() {
-  const { oil } = useMachine();
+  const { oil, oils } = useMachine();
   const { t } = useTranslation();
   const p = oil.physics;
 
   const description =
     t.oilDescriptions[oil.id as keyof typeof t.oilDescriptions] ?? oil.description;
+
+  // Overlay every oil on a shared axis so the magnitudes and slopes differ
+  // visibly; the selected oil is highlighted.
+  const viscosityData = oil.viscosity.map((point, i) => {
+    const row: Record<string, number> = { temperature: point.temperature };
+    for (const o of oils) row[o.id] = o.viscosity[i].kinematic;
+    return row;
+  });
 
   const stats: { label: string; value: string }[] = [
     { label: t.oil.density, value: `${oil.density.toFixed(3)} g/cm³` },
@@ -74,7 +82,7 @@ export function OilInfo() {
         <CardContent>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={oil.viscosity} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
+              <LineChart data={viscosityData} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                   dataKey="temperature"
@@ -94,9 +102,9 @@ export function OilInfo() {
                   }}
                 />
                 <Tooltip
-                  formatter={(value) => [
+                  formatter={(value, name) => [
                     `${Number(value).toFixed(1)} ${t.oil.viscosityUnit}`,
-                    t.oil.viscosityLegend,
+                    name,
                   ]}
                   labelFormatter={(temp) => `${temp} °C`}
                   contentStyle={{
@@ -106,14 +114,22 @@ export function OilInfo() {
                     fontSize: 12,
                   }}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="kinematic"
-                  name={t.oil.viscosityLegend}
-                  stroke="var(--chart-3)"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                />
+                {oils.map((o) => {
+                  const selected = o.id === oil.id;
+                  return (
+                    <Line
+                      key={o.id}
+                      type="monotone"
+                      dataKey={o.id}
+                      name={o.grade}
+                      stroke={selected ? "var(--chart-1)" : "var(--muted-foreground)"}
+                      strokeWidth={selected ? 2.5 : 1}
+                      strokeOpacity={selected ? 1 : 0.35}
+                      dot={selected ? { r: 3 } : false}
+                      isAnimationActive={false}
+                    />
+                  );
+                })}
               </LineChart>
             </ResponsiveContainer>
           </div>

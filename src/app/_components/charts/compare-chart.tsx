@@ -22,13 +22,18 @@ import {
 import { useTranslation } from "@/i18n";
 import { runCompareScenario, type CompareScenarioResult } from "@/simulation";
 
+/** Pulse mass both dispensers target, in grams. */
+const MASS_TARGET_G = 10;
+/** Temperature the legacy fixed-time dispenser was calibrated at, in °C. */
+const FIXED_CALIBRATION_TEMP_C = 25;
+
 export function CompareChart() {
   const { t } = useTranslation();
   const [data, setData] = useState<CompareScenarioResult | null>(null);
 
   useEffect(() => {
     let active = true;
-    runCompareScenario(5, 25).then((r) => {
+    runCompareScenario(MASS_TARGET_G, FIXED_CALIBRATION_TEMP_C).then((r) => {
       if (active) setData(r);
     });
     return () => {
@@ -41,7 +46,10 @@ export function CompareChart() {
       <CardHeader>
         <CardTitle>{t.compare.title}</CardTitle>
         <CardDescription>
-          {t.compare.subtitle(data?.massTarget ?? 5, data?.fixedCalibrationTemp ?? 25)}
+          {t.compare.subtitle(
+            data?.massTarget ?? MASS_TARGET_G,
+            data?.fixedCalibrationTemp ?? FIXED_CALIBRATION_TEMP_C,
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
