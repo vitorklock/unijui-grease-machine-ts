@@ -88,6 +88,8 @@ export const en = {
     clearCalibration: "Clear calibration",
     pointsTitle: "Calibration points",
     pointsStored: (n: number) => `${n} point${n === 1 ? "" : "s"} stored.`,
+    viewAll: (n: number) => `View all ${n} points`,
+    showLess: "Show less",
     noPoints: "No calibration yet. Run a calibration to populate the store.",
     colTemp: "Temp",
     colRegime: "Regime",

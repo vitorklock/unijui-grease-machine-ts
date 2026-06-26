@@ -90,6 +90,8 @@ export const pt: Messages = {
     pointsTitle: "Pontos de calibração",
     pointsStored: (n: number) =>
       `${n} ponto${n === 1 ? "" : "s"} armazenado${n === 1 ? "" : "s"}.`,
+    viewAll: (n: number) => `Ver todos os ${n} pontos`,
+    showLess: "Ver menos",
     noPoints: "Sem calibração ainda. Execute uma calibração para preencher os dados.",
     colTemp: "Temp",
     colRegime: "Regime",

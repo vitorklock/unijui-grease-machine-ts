@@ -19,11 +19,19 @@ import { useMachine, useSnapshot } from "./machine-context";
 
 const QUICK_TEMPS = [10, 20, 28, 35, 40];
 
+/** Rows shown before the list collapses behind a "View all" toggle. */
+const POINTS_LIMIT = 7;
+
 export function CalibrationPanel() {
   const m = useMachine();
   const snapshot = useSnapshot();
   const { t } = useTranslation();
   const [temp, setTemp] = useState(10);
+  const [showAll, setShowAll] = useState(false);
+
+  const total = m.points.length;
+  const collapsed = total > POINTS_LIMIT && !showAll;
+  const visiblePoints = collapsed ? m.points.slice(0, POINTS_LIMIT) : m.points;
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.3fr]">
@@ -91,47 +99,67 @@ export function CalibrationPanel() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t.calibrate.pointsTitle}</CardTitle>
-          <CardDescription>{t.calibrate.pointsStored(m.points.length)}</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            {t.calibrate.pointsTitle}
+            {total > 0 ? (
+              <Badge variant="secondary" className="font-normal tabular-nums">
+                {total}
+              </Badge>
+            ) : null}
+          </CardTitle>
+          <CardDescription>{t.calibrate.pointsStored(total)}</CardDescription>
         </CardHeader>
         <CardContent>
-          {m.points.length === 0 ? (
+          {total === 0 ? (
             <p className="text-sm text-muted-foreground">{t.calibrate.noPoints}</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-xs text-muted-foreground">
-                    <th className="py-2 pr-3 font-medium">{t.calibrate.colTemp}</th>
-                    <th className="py-2 pr-3 font-medium">{t.calibrate.colRegime}</th>
-                    <th className="py-2 pr-3 text-right font-medium">{t.calibrate.colCalMass}</th>
-                    <th className="py-2 pr-3 text-right font-medium">{t.calibrate.colMotorTime}</th>
-                    <th className="py-2 pr-3 text-right font-medium">{t.calibrate.colFlow}</th>
-                    <th className="py-2 text-right font-medium">{t.calibrate.colDrip}</th>
-                  </tr>
-                </thead>
-                <tbody className="tabular-nums">
-                  {m.points.map((p, i) => (
-                    <tr key={`${p.temperature}-${p.regime}-${i}`} className="border-b last:border-0">
-                      <td className="py-1.5 pr-3">{p.temperature} °C</td>
-                      <td className="py-1.5 pr-3">
-                        <Badge variant="secondary" className="font-normal">
-                          {p.regime === "SHORT"
-                            ? t.calibrate.regimeShort
-                            : t.calibrate.regimeLong}
-                        </Badge>
-                      </td>
-                      <td className="py-1.5 pr-3 text-right">{p.calTarget} g</td>
-                      <td className="py-1.5 pr-3 text-right">{p.motorOnTime.toFixed(3)} s</td>
-                      <td className="py-1.5 pr-3 text-right">
-                        {(p.calTarget / p.motorOnTime).toFixed(2)} g/s
-                      </td>
-                      <td className="py-1.5 text-right">{p.drip.toFixed(2)} g</td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-xs text-muted-foreground">
+                      <th className="py-2 pr-3 font-medium">{t.calibrate.colTemp}</th>
+                      <th className="py-2 pr-3 font-medium">{t.calibrate.colRegime}</th>
+                      <th className="py-2 pr-3 text-right font-medium">{t.calibrate.colCalMass}</th>
+                      <th className="py-2 pr-3 text-right font-medium">{t.calibrate.colMotorTime}</th>
+                      <th className="py-2 pr-3 text-right font-medium">{t.calibrate.colFlow}</th>
+                      <th className="py-2 text-right font-medium">{t.calibrate.colDrip}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="tabular-nums">
+                    {visiblePoints.map((p, i) => (
+                      <tr key={`${p.temperature}-${p.regime}-${i}`} className="border-b last:border-0">
+                        <td className="py-1.5 pr-3">{p.temperature} °C</td>
+                        <td className="py-1.5 pr-3">
+                          <Badge variant="secondary" className="font-normal">
+                            {p.regime === "SHORT"
+                              ? t.calibrate.regimeShort
+                              : t.calibrate.regimeLong}
+                          </Badge>
+                        </td>
+                        <td className="py-1.5 pr-3 text-right">{p.calTarget} g</td>
+                        <td className="py-1.5 pr-3 text-right">{p.motorOnTime.toFixed(3)} s</td>
+                        <td className="py-1.5 pr-3 text-right">
+                          {(p.calTarget / p.motorOnTime).toFixed(2)} g/s
+                        </td>
+                        <td className="py-1.5 text-right">{p.drip.toFixed(2)} g</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {total > POINTS_LIMIT ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 w-full"
+                  onClick={() => setShowAll((v) => !v)}
+                >
+                  {showAll ? t.calibrate.showLess : t.calibrate.viewAll(total)}
+                </Button>
+              ) : null}
+            </>
           )}
         </CardContent>
       </Card>
