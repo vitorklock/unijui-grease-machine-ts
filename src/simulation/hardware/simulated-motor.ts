@@ -14,13 +14,23 @@ export class SimulatedMotor implements Hardware.Motor {
     lastStopTime: number | null = null;
     /** Duration of the most recent completed run, in seconds. */
     lastRunDuration = 0;
+    /** Ambient temperature captured when the current/last run started (°C). */
+    runTemperature: number;
 
-    constructor(private readonly clock: Clock) { }
+    constructor(
+        private readonly clock: Clock,
+        private readonly thermometer: Hardware.Thermometer,
+    ) {
+        this.runTemperature = thermometer.readTemperature();
+    }
 
     start(): void {
         if (!this.running) {
             this.running = true;
             this.startedAt = this.clock.now();
+            // Lock the dispense to the temperature at the moment it starts, so a
+            // later slider change doesn't rewrite mass that was already delivered.
+            this.runTemperature = this.thermometer.readTemperature();
         }
     }
 

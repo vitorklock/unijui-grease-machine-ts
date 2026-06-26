@@ -49,8 +49,8 @@ export class GreaseMachineSimulation {
         this.physics = new GreasePhysicsModel(config.physics);
         this.clock = config.clock ?? new ManualClock();
         this.thermometer = new SimulatedThermometer(config.ambientTemp ?? 20);
-        this.motor = new SimulatedMotor(this.clock);
-        this.scale = new SimulatedScale(this.motor, this.thermometer, this.physics, this.clock);
+        this.motor = new SimulatedMotor(this.clock, this.thermometer);
+        this.scale = new SimulatedScale(this.motor, this.physics, this.clock);
         this.devices = {
             motor: this.motor,
             scale: this.scale,
@@ -95,8 +95,8 @@ export class GreaseMachineSimulation {
     async calibrateAt(temperature: number): Promise<Calibration.Point[]> {
         const clock = new ManualClock();
         const thermometer = new SimulatedThermometer(temperature);
-        const motor = new SimulatedMotor(clock);
-        const scale = new SimulatedScale(motor, thermometer, this.physics, clock);
+        const motor = new SimulatedMotor(clock, thermometer);
+        const scale = new SimulatedScale(motor, this.physics, clock);
         const procedure = new CalibrationProcedure({
             devices: { motor, scale, thermometer },
             store: this.store,

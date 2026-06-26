@@ -1,7 +1,6 @@
 import type { Clock, Hardware } from "@/lib/grease-machine";
 import type { GreasePhysicsModel } from "../physics";
 import type { SimulatedMotor } from "./simulated-motor";
-import type { SimulatedThermometer } from "./simulated-thermometer";
 
 /**
  * Simulated scale. Derives the container mass from the motor's on-time and the
@@ -13,13 +12,15 @@ import type { SimulatedThermometer } from "./simulated-thermometer";
 export class SimulatedScale implements Hardware.Scale {
     constructor(
         private readonly motor: SimulatedMotor,
-        private readonly thermometer: SimulatedThermometer,
         private readonly physics: GreasePhysicsModel,
         private readonly clock: Clock,
     ) { }
 
     readWeight(): number {
-        const temperature = this.thermometer.readTemperature();
+        // Use the temperature the pulse was dispensed at (locked by the motor),
+        // not the live thermometer, so sliding the temperature doesn't change
+        // mass that is already in the container.
+        const temperature = this.motor.runTemperature;
         const flow = this.physics.flowRate(temperature);
         const dispensed = this.motor.elapsedOnTime() * flow;
 
