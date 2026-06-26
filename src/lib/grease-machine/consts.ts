@@ -20,7 +20,7 @@ export const STABLE_WINDOW_S = 15;
 
 /** Poll interval for the calibration scale loops, in seconds. Fine enough that
  *  the per-poll overshoot (flow x POLL_S) stays well under the scale tolerance. */
-export const POLL_S = 0.02;
+export const POLL_S = 0.001;
 
 /** Safety cap on how long to wait for the drip to settle, in seconds. */
 export const STABILIZATION_TIMEOUT_S = 120;

@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "script": "vite-node scripts/_run.ts"
+    "script": "vite-node scripts/_run.ts",
+    "script:paper": "vite-node scripts/_run.ts export-paper-data && python3 scripts/figures/make_figures.py"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
