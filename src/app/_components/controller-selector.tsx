@@ -1,17 +1,20 @@
 "use client";
 
 import { CONTROLLERS } from "@/lib/grease-machine";
+import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { useMachine } from "./machine-context";
 
 /** Renders one button per registered controller — no per-controller special-casing. */
 export function ControllerSelector() {
   const { controllerKey, setControllerKey } = useMachine();
+  const { t } = useTranslation();
 
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       {Object.values(CONTROLLERS).map((entry) => {
         const active = entry.key === controllerKey;
+        const labels = t.controllers[entry.key];
         return (
           <button
             key={entry.key}
@@ -25,9 +28,9 @@ export function ControllerSelector() {
                 : "border-border hover:bg-muted/50",
             )}
           >
-            <div className="text-sm font-medium">{entry.label}</div>
+            <div className="text-sm font-medium">{labels.label}</div>
             <div className="mt-1 text-xs text-muted-foreground">
-              {entry.description}
+              {labels.description}
             </div>
           </button>
         );

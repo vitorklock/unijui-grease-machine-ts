@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { ControllerSelector } from "./controller-selector";
 import { SPEED_OPTIONS, useMachine } from "./machine-context";
@@ -22,6 +23,7 @@ const s = (n: number) => `${n.toFixed(3)} s`;
 
 export function OperatePanel() {
   const m = useMachine();
+  const { t } = useTranslation();
   const barMax = Math.max(m.massPerPulse * 1.4, 30);
   const barPct = Math.min(100, (m.snapshot.scaleWeight / barMax) * 100);
 
@@ -30,10 +32,8 @@ export function OperatePanel() {
       <div className="flex flex-col gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Controller</CardTitle>
-            <CardDescription>
-              Pick how the machine drives the motor.
-            </CardDescription>
+            <CardTitle>{t.operate.controllerTitle}</CardTitle>
+            <CardDescription>{t.operate.controllerSubtitle}</CardDescription>
           </CardHeader>
           <CardContent>
             <ControllerSelector />
@@ -43,13 +43,10 @@ export function OperatePanel() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Ambient temperature
+              {t.operate.ambientTitle}
               <span className="font-mono text-base">{m.temperature.toFixed(0)} °C</span>
             </CardTitle>
-            <CardDescription>
-              Flow and drip change with temperature — sweep it to watch the
-              compensated controller hold the dose.
-            </CardDescription>
+            <CardDescription>{t.operate.ambientSubtitle}</CardDescription>
           </CardHeader>
           <CardContent>
             <Slider
@@ -70,11 +67,9 @@ export function OperatePanel() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Droplet className="size-4 text-chart-1" />
-              Live scale
+              {t.operate.liveScaleTitle}
             </CardTitle>
-            <CardDescription>
-              Dispensed mass in the container (clears between pulses).
-            </CardDescription>
+            <CardDescription>{t.operate.liveScaleSubtitle}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="font-mono text-4xl font-semibold tabular-nums">
@@ -92,12 +87,12 @@ export function OperatePanel() {
             </div>
             <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
               <Badge variant={m.snapshot.motorRunning ? "default" : "secondary"}>
-                motor {m.snapshot.motorRunning ? "running" : "idle"}
+                {m.snapshot.motorRunning ? t.operate.motorRunning : t.operate.motorIdle}
               </Badge>
               <Badge variant={m.snapshot.ready ? "default" : "outline"}>
                 {m.snapshot.ready
-                  ? "calibrated"
-                  : `needs calibration (${m.snapshot.completeTemperatures.length}/2 temps)`}
+                  ? t.operate.calibrated
+                  : t.operate.needsCalibration(m.snapshot.completeTemperatures.length)}
               </Badge>
             </div>
           </CardContent>
@@ -106,12 +101,9 @@ export function OperatePanel() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Gauge className="size-4" /> Simulation speed
+              <Gauge className="size-4" /> {t.operate.speedTitle}
             </CardTitle>
-            <CardDescription>
-              A real micro-dosing pump is slow, so the demo compresses wall-clock
-              time. Motor on-times shown are real-machine seconds.
-            </CardDescription>
+            <CardDescription>{t.operate.speedSubtitle}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-1.5">
@@ -147,16 +139,14 @@ export function OperatePanel() {
 
 function ManualControls() {
   const m = useMachine();
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Hand className="size-4" /> Manual control
+          <Hand className="size-4" /> {t.operate.manualTitle}
         </CardTitle>
-        <CardDescription>
-          Hold to run the motor — for filling hoses and purging air. No
-          calibration needed.
-        </CardDescription>
+        <CardDescription>{t.operate.manualSubtitle}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <Button
@@ -167,10 +157,10 @@ function ManualControls() {
           onPointerLeave={m.manualOff}
           onContextMenu={(e) => e.preventDefault()}
         >
-          {m.snapshot.motorRunning ? "Running…" : "Hold to run"}
+          {m.snapshot.motorRunning ? t.operate.running : t.operate.holdToRun}
         </Button>
         <Button variant="outline" onClick={m.tare}>
-          <RotateCcw className="size-4" /> Tare scale
+          <RotateCcw className="size-4" /> {t.operate.tareScale}
         </Button>
       </CardContent>
     </Card>
@@ -179,20 +169,19 @@ function ManualControls() {
 
 function AutomaticControls() {
   const m = useMachine();
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Zap className="size-4 text-chart-1" /> Automatic dispensing
+          <Zap className="size-4 text-chart-1" /> {t.operate.autoTitle}
         </CardTitle>
-        <CardDescription>
-          Compensated pulses of a target mass at a fixed interval.
-        </CardDescription>
+        <CardDescription>{t.operate.autoSubtitle}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1.5">
-            <Label htmlFor="mass">Mass per pulse (g)</Label>
+            <Label htmlFor="mass">{t.operate.massPerPulse}</Label>
             <Input
               id="mass"
               type="number"
@@ -203,7 +192,7 @@ function AutomaticControls() {
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="interval">Interval (s)</Label>
+            <Label htmlFor="interval">{t.operate.interval}</Label>
             <Input
               id="interval"
               type="number"
@@ -218,11 +207,11 @@ function AutomaticControls() {
         <div className="flex flex-wrap gap-2">
           {m.running ? (
             <Button variant="destructive" onClick={m.stopAuto}>
-              <Pause className="size-4" /> Stop cycle
+              <Pause className="size-4" /> {t.operate.stopCycle}
             </Button>
           ) : (
             <Button onClick={m.startAuto} disabled={!m.snapshot.ready}>
-              <Play className="size-4" /> Start cycle
+              <Play className="size-4" /> {t.operate.startCycle}
             </Button>
           )}
           <Button
@@ -230,18 +219,15 @@ function AutomaticControls() {
             onClick={m.dispenseOne}
             disabled={m.running || !m.snapshot.ready}
           >
-            Dispense one pulse
+            {t.operate.dispenseOne}
           </Button>
           <Button variant="secondary" onClick={m.restart}>
-            <RotateCcw className="size-4" /> Restart
+            <RotateCcw className="size-4" /> {t.operate.restart}
           </Button>
         </div>
 
         {!m.snapshot.ready ? (
-          <p className="text-xs text-muted-foreground">
-            Calibrate at two or more temperatures (Calibrate tab) to enable
-            automatic dispensing.
-          </p>
+          <p className="text-xs text-muted-foreground">{t.operate.enableHint}</p>
         ) : null}
       </CardContent>
     </Card>
@@ -250,22 +236,23 @@ function AutomaticControls() {
 
 function DispenseLog() {
   const m = useMachine();
+  const { t } = useTranslation();
   return (
     <Card className="flex-1">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          Pulse log
+          {t.operate.pulseLogTitle}
           {m.log.length > 0 ? (
             <Button variant="ghost" size="sm" onClick={m.clearLog}>
-              Clear
+              {t.operate.clear}
             </Button>
           ) : null}
         </CardTitle>
-        <CardDescription>Most recent pulses first.</CardDescription>
+        <CardDescription>{t.operate.pulseLogSubtitle}</CardDescription>
       </CardHeader>
       <CardContent>
         {m.log.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No pulses yet.</p>
+          <p className="text-sm text-muted-foreground">{t.operate.noPulses}</p>
         ) : (
           <ul className="flex max-h-72 flex-col gap-1 overflow-auto text-sm">
             {m.log.map((entry) => (
@@ -275,8 +262,11 @@ function DispenseLog() {
               >
                 <span className="font-medium tabular-nums">{g(entry.massTarget)}</span>
                 <span className="text-xs text-muted-foreground tabular-nums">
-                  {entry.temperature.toFixed(0)} °C · motor {s(entry.motorOnTime)} ·
-                  drip ≈ {entry.estimatedDrip.toFixed(2)} g
+                  {t.operate.pulseDetail(
+                    entry.temperature.toFixed(0),
+                    s(entry.motorOnTime),
+                    entry.estimatedDrip.toFixed(2),
+                  )}
                 </span>
               </li>
             ))}

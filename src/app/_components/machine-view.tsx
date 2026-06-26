@@ -2,25 +2,29 @@
 
 import { Droplets } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTranslation } from "@/i18n";
 import { CalibrationPanel } from "./calibration-panel";
 import { AccuracyChart } from "./charts/accuracy-chart";
 import { CalibrationCurves } from "./charts/calibration-curves";
 import { CompareChart } from "./charts/compare-chart";
+import { LanguageSwitcher } from "./language-switcher";
 import { MachineProvider } from "./machine-context";
 import { OilInfo } from "./oil-info";
 import { OilSelector } from "./oil-selector";
 import { OperatePanel } from "./operate-panel";
 
-const TABS = [
-  { value: "operate", label: "Operate" },
-  { value: "calibrate", label: "Calibrate" },
-  { value: "oil", label: "Oil" },
-  { value: "curves", label: "Curves" },
-  { value: "accuracy", label: "Accuracy" },
-  { value: "compare", label: "Compare" },
-];
+const TAB_VALUES = [
+  "operate",
+  "calibrate",
+  "oil",
+  "curves",
+  "accuracy",
+  "compare",
+] as const;
 
 export function MachineView() {
+  const { t } = useTranslation();
+
   return (
     <MachineProvider>
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-8">
@@ -30,21 +34,21 @@ export function MachineView() {
               <Droplets className="size-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Grease Machine</h1>
-              <p className="text-sm text-muted-foreground">
-                Temperature-compensated precision dispenser for thin drip oil.
-                Calibrate, then dispense exact pulses regardless of the weather.
-              </p>
+              <h1 className="text-2xl font-semibold tracking-tight">{t.header.title}</h1>
+              <p className="text-sm text-muted-foreground">{t.header.subtitle}</p>
             </div>
           </div>
-          <OilSelector />
+          <div className="flex flex-wrap items-center gap-2">
+            <LanguageSwitcher />
+            <OilSelector />
+          </div>
         </header>
 
         <Tabs defaultValue="operate" className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto">
-            {TABS.map((t) => (
-              <TabsTrigger key={t.value} value={t.value}>
-                {t.label}
+            {TAB_VALUES.map((v) => (
+              <TabsTrigger key={v} value={v}>
+                {t.tabs[v]}
               </TabsTrigger>
             ))}
           </TabsList>

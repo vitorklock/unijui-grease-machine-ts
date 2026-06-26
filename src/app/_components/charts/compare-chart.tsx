@@ -19,9 +19,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useTranslation } from "@/i18n";
 import { runCompareScenario, type CompareScenarioResult } from "@/simulation";
 
 export function CompareChart() {
+  const { t } = useTranslation();
   const [data, setData] = useState<CompareScenarioResult | null>(null);
 
   useEffect(() => {
@@ -37,12 +39,9 @@ export function CompareChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Compensated vs. fixed-time dispenser</CardTitle>
+        <CardTitle>{t.compare.title}</CardTitle>
         <CardDescription>
-          Both target {data?.massTarget ?? 5} g. The legacy dispenser is set once at{" "}
-          {data?.fixedCalibrationTemp ?? 25} °C and never adjusts, so it
-          over/under-dispenses as the temperature drifts; the compensated
-          controller holds the dose.
+          {t.compare.subtitle(data?.massTarget ?? 5, data?.fixedCalibrationTemp ?? 25)}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -58,25 +57,25 @@ export function CompareChart() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis
                     dataKey="temperature"
-                    tickFormatter={(t: number) => `${t}°`}
+                    tickFormatter={(temp) => `${temp}°`}
                     stroke="var(--muted-foreground)"
                     fontSize={12}
                   />
                   <YAxis
                     stroke="var(--muted-foreground)"
                     fontSize={12}
-                    tickFormatter={(v: number) => `${v.toFixed(0)}g`}
+                    tickFormatter={(v) => `${Number(v).toFixed(0)}g`}
                     domain={[0, "auto"]}
                   />
                   <ReferenceLine
                     y={data.massTarget}
                     stroke="var(--muted-foreground)"
                     strokeDasharray="4 4"
-                    label={{ value: "target", fontSize: 11, position: "insideTopRight" }}
+                    label={{ value: t.compare.target, fontSize: 11, position: "insideTopRight" }}
                   />
                   <Tooltip
                     formatter={(value, name) => [`${Number(value).toFixed(2)} g`, name]}
-                    labelFormatter={(t) => `${t} °C`}
+                    labelFormatter={(temp) => `${temp} °C`}
                     contentStyle={{
                       background: "var(--popover)",
                       border: "1px solid var(--border)",
@@ -87,7 +86,7 @@ export function CompareChart() {
                   <Line
                     type="monotone"
                     dataKey="fixed"
-                    name="fixed-time"
+                    name={t.compare.colFixed}
                     stroke="var(--chart-5)"
                     strokeWidth={2}
                     dot={{ r: 3 }}
@@ -95,7 +94,7 @@ export function CompareChart() {
                   <Line
                     type="monotone"
                     dataKey="compensated"
-                    name="compensated"
+                    name={t.compare.compensated}
                     stroke="var(--chart-1)"
                     strokeWidth={2}
                     dot={{ r: 3 }}
@@ -107,11 +106,11 @@ export function CompareChart() {
             <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <span className="size-2.5 rounded-full" style={{ background: "var(--chart-1)" }} />
-                compensated
+                {t.compare.compensated}
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="size-2.5 rounded-full" style={{ background: "var(--chart-5)" }} />
-                fixed-time (set at {data.fixedCalibrationTemp} °C)
+                {t.compare.fixedAt(data.fixedCalibrationTemp)}
               </span>
             </div>
 
@@ -119,10 +118,10 @@ export function CompareChart() {
               <table className="w-full text-sm tabular-nums">
                 <thead>
                   <tr className="border-b text-left text-xs text-muted-foreground">
-                    <th className="py-2 pr-3 font-medium">Temp</th>
-                    <th className="py-2 pr-3 text-right font-medium">Compensated</th>
-                    <th className="py-2 pr-3 text-right font-medium">Fixed-time</th>
-                    <th className="py-2 text-right font-medium">Fixed error</th>
+                    <th className="py-2 pr-3 font-medium">{t.compare.colTemp}</th>
+                    <th className="py-2 pr-3 text-right font-medium">{t.compare.colCompensated}</th>
+                    <th className="py-2 pr-3 text-right font-medium">{t.compare.colFixed}</th>
+                    <th className="py-2 text-right font-medium">{t.compare.colFixedError}</th>
                   </tr>
                 </thead>
                 <tbody>

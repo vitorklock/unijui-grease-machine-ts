@@ -19,9 +19,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useTranslation } from "@/i18n";
 import { runCalibrationScenario, type CalibrationScenarioResult } from "@/simulation";
 
 export function CalibrationCurves() {
+  const { t } = useTranslation();
   const [data, setData] = useState<CalibrationScenarioResult | null>(null);
 
   useEffect(() => {
@@ -37,16 +39,16 @@ export function CalibrationCurves() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Calibration curves</CardTitle>
+        <CardTitle>{t.curves.title}</CardTitle>
         <CardDescription>
-          Standard calibration at {data?.temperatures.join(", ") ?? "10, 20, 35"} °C.
-          Flow rises with temperature while drip falls — and a long pulse always
-          drips more than a short one.
+          {t.curves.subtitle((data?.temperatures ?? [10, 20, 35]).join(", "))}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {!data ? (
-          <Loading />
+          <div className="flex h-80 items-center justify-center text-muted-foreground">
+            <Loader2 className="size-5 animate-spin" />
+          </div>
         ) : (
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -54,7 +56,7 @@ export function CalibrationCurves() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                   dataKey="temperature"
-                  tickFormatter={(t: number) => `${t.toFixed(0)}°`}
+                  tickFormatter={(t) => `${Number(t).toFixed(0)}°`}
                   stroke="var(--muted-foreground)"
                   fontSize={12}
                 />
@@ -62,20 +64,18 @@ export function CalibrationCurves() {
                   yAxisId="flow"
                   stroke="var(--chart-1)"
                   fontSize={12}
-                  tickFormatter={(v: number) => v.toFixed(0)}
-                  label={{ value: "flow (g/s)", angle: -90, position: "insideLeft", fontSize: 12 }}
+                  tickFormatter={(v) => Number(v).toFixed(0)}
                 />
                 <YAxis
                   yAxisId="drip"
                   orientation="right"
                   stroke="var(--chart-3)"
                   fontSize={12}
-                  tickFormatter={(v: number) => v.toFixed(1)}
-                  label={{ value: "drip (g)", angle: 90, position: "insideRight", fontSize: 12 }}
+                  tickFormatter={(v) => Number(v).toFixed(1)}
                 />
                 <Tooltip
                   formatter={(value, name) => [Number(value).toFixed(2), name]}
-                  labelFormatter={(t) => `${Number(t).toFixed(1)} °C`}
+                  labelFormatter={(temp) => `${Number(temp).toFixed(1)} °C`}
                   contentStyle={{
                     background: "var(--popover)",
                     border: "1px solid var(--border)",
@@ -83,10 +83,10 @@ export function CalibrationCurves() {
                     fontSize: 12,
                   }}
                 />
-                {data.temperatures.map((t) => (
+                {data.temperatures.map((temp) => (
                   <ReferenceLine
-                    key={t}
-                    x={t}
+                    key={temp}
+                    x={temp}
                     yAxisId="flow"
                     stroke="var(--muted-foreground)"
                     strokeDasharray="2 4"
@@ -96,7 +96,7 @@ export function CalibrationCurves() {
                   yAxisId="flow"
                   type="monotone"
                   dataKey="flow"
-                  name="flow"
+                  name={t.curves.flowLegend}
                   stroke="var(--chart-1)"
                   dot={false}
                   strokeWidth={2}
@@ -105,7 +105,7 @@ export function CalibrationCurves() {
                   yAxisId="drip"
                   type="monotone"
                   dataKey="dripShort"
-                  name="drip (short pulse)"
+                  name={t.curves.dripShortLegend}
                   stroke="var(--chart-2)"
                   dot={false}
                   strokeWidth={2}
@@ -114,7 +114,7 @@ export function CalibrationCurves() {
                   yAxisId="drip"
                   type="monotone"
                   dataKey="dripLong"
-                  name="drip (long pulse)"
+                  name={t.curves.dripLongLegend}
                   stroke="var(--chart-3)"
                   dot={false}
                   strokeWidth={2}
@@ -123,19 +123,13 @@ export function CalibrationCurves() {
             </ResponsiveContainer>
           </div>
         )}
-        <Legend />
+        <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
+          <Swatch color="var(--chart-1)" label={t.curves.flowLegend} />
+          <Swatch color="var(--chart-2)" label={t.curves.dripShortLegend} />
+          <Swatch color="var(--chart-3)" label={t.curves.dripLongLegend} />
+        </div>
       </CardContent>
     </Card>
-  );
-}
-
-function Legend() {
-  return (
-    <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
-      <Swatch color="var(--chart-1)" label="flow (g/s)" />
-      <Swatch color="var(--chart-2)" label="drip, short pulse (g)" />
-      <Swatch color="var(--chart-3)" label="drip, long pulse (g)" />
-    </div>
   );
 }
 
@@ -145,13 +139,5 @@ function Swatch({ color, label }: { color: string; label: string }) {
       <span className="size-2.5 rounded-full" style={{ background: color }} />
       {label}
     </span>
-  );
-}
-
-function Loading() {
-  return (
-    <div className="flex h-80 items-center justify-center text-muted-foreground">
-      <Loader2 className="size-5 animate-spin" />
-    </div>
   );
 }

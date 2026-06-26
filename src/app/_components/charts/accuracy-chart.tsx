@@ -20,9 +20,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useTranslation } from "@/i18n";
 import { runAccuracyScenario, type AccuracyScenarioResult } from "@/simulation";
 
 export function AccuracyChart() {
+  const { t } = useTranslation();
   const [data, setData] = useState<AccuracyScenarioResult | null>(null);
 
   useEffect(() => {
@@ -39,8 +41,6 @@ export function AccuracyChart() {
     data?.results.map((r) => ({
       label: `${r.massTarget} g`,
       errorPct: r.errorPct,
-      delivered: r.delivered,
-      target: r.massTarget,
     })) ?? [];
 
   const meanAbs =
@@ -51,12 +51,8 @@ export function AccuracyChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Dispensing accuracy at 25 °C</CardTitle>
-        <CardDescription>
-          A temperature between calibration points, so the result depends entirely
-          on interpolation. The relative error stays small and roughly constant
-          across pulse sizes (mean |error| ≈ {meanAbs.toFixed(2)}%).
-        </CardDescription>
+        <CardTitle>{t.accuracy.title}</CardTitle>
+        <CardDescription>{t.accuracy.subtitle(meanAbs.toFixed(2))}</CardDescription>
       </CardHeader>
       <CardContent>
         {!data ? (
@@ -73,11 +69,11 @@ export function AccuracyChart() {
                   <YAxis
                     stroke="var(--muted-foreground)"
                     fontSize={12}
-                    tickFormatter={(v: number) => `${v.toFixed(1)}%`}
+                    tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
                   />
                   <ReferenceLine y={0} stroke="var(--muted-foreground)" />
                   <Tooltip
-                    formatter={(value) => [`${Number(value).toFixed(3)} %`, "error"]}
+                    formatter={(value) => [`${Number(value).toFixed(3)} %`, t.accuracy.error]}
                     contentStyle={{
                       background: "var(--popover)",
                       border: "1px solid var(--border)",
@@ -101,11 +97,11 @@ export function AccuracyChart() {
               <table className="w-full text-sm tabular-nums">
                 <thead>
                   <tr className="border-b text-left text-xs text-muted-foreground">
-                    <th className="py-2 pr-3 font-medium">Target</th>
-                    <th className="py-2 pr-3 text-right font-medium">Motor time</th>
-                    <th className="py-2 pr-3 text-right font-medium">Delivered</th>
-                    <th className="py-2 pr-3 text-right font-medium">Error</th>
-                    <th className="py-2 text-right font-medium">Error %</th>
+                    <th className="py-2 pr-3 font-medium">{t.accuracy.colTarget}</th>
+                    <th className="py-2 pr-3 text-right font-medium">{t.accuracy.colMotorTime}</th>
+                    <th className="py-2 pr-3 text-right font-medium">{t.accuracy.colDelivered}</th>
+                    <th className="py-2 pr-3 text-right font-medium">{t.accuracy.colError}</th>
+                    <th className="py-2 text-right font-medium">{t.accuracy.colErrorPct}</th>
                   </tr>
                 </thead>
                 <tbody>

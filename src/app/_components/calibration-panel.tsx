@@ -13,12 +13,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "@/i18n";
 import { useMachine } from "./machine-context";
 
 const QUICK_TEMPS = [10, 20, 28, 35];
 
 export function CalibrationPanel() {
   const m = useMachine();
+  const { t } = useTranslation();
   const [temp, setTemp] = useState(10);
 
   return (
@@ -26,16 +28,13 @@ export function CalibrationPanel() {
       <Card className="self-start">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Thermometer className="size-4" /> Run a calibration
+            <Thermometer className="size-4" /> {t.calibrate.runTitle}
           </CardTitle>
-          <CardDescription>
-            At each temperature the procedure runs a short (5 g) and a long (30 g)
-            pulse, waits for the drip to settle, and records flow and drip.
-          </CardDescription>
+          <CardDescription>{t.calibrate.runSubtitle}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-1.5">
-            <Label htmlFor="cal-temp">Temperature (°C)</Label>
+            <Label htmlFor="cal-temp">{t.calibrate.temperature}</Label>
             <Input
               id="cal-temp"
               type="number"
@@ -47,14 +46,14 @@ export function CalibrationPanel() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {QUICK_TEMPS.map((t) => (
+            {QUICK_TEMPS.map((value) => (
               <Button
-                key={t}
+                key={value}
                 variant="outline"
                 size="sm"
-                onClick={() => setTemp(t)}
+                onClick={() => setTemp(value)}
               >
-                {t} °C
+                {value} °C
               </Button>
             ))}
           </div>
@@ -62,31 +61,27 @@ export function CalibrationPanel() {
           <Button onClick={() => m.calibrateAt(temp)} disabled={m.calibrating}>
             {m.calibrating ? (
               <>
-                <Loader2 className="size-4 animate-spin" /> Calibrating…
+                <Loader2 className="size-4 animate-spin" /> {t.calibrate.calibrating}
               </>
             ) : (
-              `Calibrate at ${temp} °C`
+              t.calibrate.calibrateAt(temp)
             )}
           </Button>
 
           <div className="flex items-center gap-2">
             <Badge variant={m.snapshot.ready ? "default" : "outline"}>
-              {m.snapshot.ready ? "Ready to dispense" : "Not ready"}
+              {m.snapshot.ready ? t.calibrate.ready : t.calibrate.notReady}
             </Badge>
             <span className="text-xs text-muted-foreground">
-              {m.snapshot.completeTemperatures.length} complete temperature
-              {m.snapshot.completeTemperatures.length === 1 ? "" : "s"}
+              {t.calibrate.completeTemps(m.snapshot.completeTemperatures.length)}
             </span>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            Need at least two temperatures. For best accuracy, calibrate on the
-            coldest and warmest days plus one in between.
-          </p>
+          <p className="text-xs text-muted-foreground">{t.calibrate.hint}</p>
 
           {m.points.length > 0 ? (
             <Button variant="ghost" size="sm" onClick={m.clearCalibration}>
-              <Trash2 className="size-4" /> Clear calibration
+              <Trash2 className="size-4" /> {t.calibrate.clearCalibration}
             </Button>
           ) : null}
         </CardContent>
@@ -94,27 +89,23 @@ export function CalibrationPanel() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Calibration points</CardTitle>
-          <CardDescription>
-            {m.points.length} point{m.points.length === 1 ? "" : "s"} stored.
-          </CardDescription>
+          <CardTitle>{t.calibrate.pointsTitle}</CardTitle>
+          <CardDescription>{t.calibrate.pointsStored(m.points.length)}</CardDescription>
         </CardHeader>
         <CardContent>
           {m.points.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No calibration yet. Run a calibration to populate the store.
-            </p>
+            <p className="text-sm text-muted-foreground">{t.calibrate.noPoints}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-xs text-muted-foreground">
-                    <th className="py-2 pr-3 font-medium">Temp</th>
-                    <th className="py-2 pr-3 font-medium">Regime</th>
-                    <th className="py-2 pr-3 text-right font-medium">Cal mass</th>
-                    <th className="py-2 pr-3 text-right font-medium">Motor time</th>
-                    <th className="py-2 pr-3 text-right font-medium">Flow</th>
-                    <th className="py-2 text-right font-medium">Drip</th>
+                    <th className="py-2 pr-3 font-medium">{t.calibrate.colTemp}</th>
+                    <th className="py-2 pr-3 font-medium">{t.calibrate.colRegime}</th>
+                    <th className="py-2 pr-3 text-right font-medium">{t.calibrate.colCalMass}</th>
+                    <th className="py-2 pr-3 text-right font-medium">{t.calibrate.colMotorTime}</th>
+                    <th className="py-2 pr-3 text-right font-medium">{t.calibrate.colFlow}</th>
+                    <th className="py-2 text-right font-medium">{t.calibrate.colDrip}</th>
                   </tr>
                 </thead>
                 <tbody className="tabular-nums">
@@ -123,7 +114,9 @@ export function CalibrationPanel() {
                       <td className="py-1.5 pr-3">{p.temperature} °C</td>
                       <td className="py-1.5 pr-3">
                         <Badge variant="secondary" className="font-normal">
-                          {p.regime.toLowerCase()}
+                          {p.regime === "SHORT"
+                            ? t.calibrate.regimeShort
+                            : t.calibrate.regimeLong}
                         </Badge>
                       </td>
                       <td className="py-1.5 pr-3 text-right">{p.calTarget} g</td>

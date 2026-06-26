@@ -17,19 +17,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useTranslation } from "@/i18n";
 import { useMachine } from "./machine-context";
 
 export function OilInfo() {
   const { oil } = useMachine();
+  const { t } = useTranslation();
   const p = oil.physics;
 
+  const description =
+    t.oilDescriptions[oil.id as keyof typeof t.oilDescriptions] ?? oil.description;
+
   const stats: { label: string; value: string }[] = [
-    { label: "Density (15 °C)", value: `${oil.density.toFixed(3)} g/cm³` },
-    { label: `Flow @ ${p.referenceTemp} °C`, value: `${p.baseFlow.toFixed(2)} g/s` },
-    { label: "Flow sensitivity", value: `${(p.flowCoeff * 100).toFixed(1)} %/°C` },
-    { label: "Drip limit", value: `${p.baseDripLimit.toFixed(2)} g` },
-    { label: "Line fill time", value: `${p.baseTauLoad.toFixed(0)} s` },
-    { label: "Drip settle time", value: `${p.baseSettle.toFixed(0)} s` },
+    { label: t.oil.density, value: `${oil.density.toFixed(3)} g/cm³` },
+    { label: t.oil.flowAt(p.referenceTemp), value: `${p.baseFlow.toFixed(2)} g/s` },
+    { label: t.oil.flowSensitivity, value: `${(p.flowCoeff * 100).toFixed(1)} %/°C` },
+    { label: t.oil.dripLimit, value: `${p.baseDripLimit.toFixed(2)} g` },
+    { label: t.oil.fillTime, value: `${p.baseTauLoad.toFixed(0)} s` },
+    { label: t.oil.settleTime, value: `${p.baseSettle.toFixed(0)} s` },
   ];
 
   return (
@@ -39,40 +44,32 @@ export function OilInfo() {
           <CardTitle className="flex flex-wrap items-center gap-2">
             {oil.grade}
             <Badge variant={oil.sourced ? "default" : "secondary"}>
-              {oil.sourced ? "sourced" : "derived"}
+              {oil.sourced ? t.oil.sourced : t.oil.derived}
             </Badge>
           </CardTitle>
           <CardDescription>{oil.name}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">{oil.description}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
 
           <div className="grid grid-cols-2 gap-3">
-            {stats.map((s) => (
-              <div key={s.label} className="rounded-lg border p-3">
-                <div className="text-xs text-muted-foreground">{s.label}</div>
-                <div className="font-mono text-base tabular-nums">{s.value}</div>
+            {stats.map((stat) => (
+              <div key={stat.label} className="rounded-lg border p-3">
+                <div className="text-xs text-muted-foreground">{stat.label}</div>
+                <div className="font-mono text-base tabular-nums">{stat.value}</div>
               </div>
             ))}
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            Source: {oil.source}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Switching oil rebuilds the machine and clears calibration — a different
-            fluid means a different flow and drip, so it must be recalibrated.
-          </p>
+          <p className="text-xs text-muted-foreground">{t.oil.sourceLabel(oil.source)}</p>
+          <p className="text-xs text-muted-foreground">{t.oil.switchNote}</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Kinematic viscosity</CardTitle>
-          <CardDescription>
-            How thin the oil is across temperature (cSt). The steep drop is what
-            makes temperature compensation necessary.
-          </CardDescription>
+          <CardTitle>{t.oil.viscosityTitle}</CardTitle>
+          <CardDescription>{t.oil.viscositySubtitle}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-64 w-full">
@@ -89,11 +86,19 @@ export function OilInfo() {
                   stroke="var(--muted-foreground)"
                   fontSize={12}
                   tickFormatter={(v) => `${Number(v).toFixed(0)}`}
-                  label={{ value: "cSt", angle: -90, position: "insideLeft", fontSize: 12 }}
+                  label={{
+                    value: t.oil.viscosityUnit,
+                    angle: -90,
+                    position: "insideLeft",
+                    fontSize: 12,
+                  }}
                 />
                 <Tooltip
-                  formatter={(value) => [`${Number(value).toFixed(1)} cSt`, "viscosity"]}
-                  labelFormatter={(t) => `${t} °C`}
+                  formatter={(value) => [
+                    `${Number(value).toFixed(1)} ${t.oil.viscosityUnit}`,
+                    t.oil.viscosityLegend,
+                  ]}
+                  labelFormatter={(temp) => `${temp} °C`}
                   contentStyle={{
                     background: "var(--popover)",
                     border: "1px solid var(--border)",
@@ -104,7 +109,7 @@ export function OilInfo() {
                 <Line
                   type="monotone"
                   dataKey="kinematic"
-                  name="viscosity"
+                  name={t.oil.viscosityLegend}
                   stroke="var(--chart-3)"
                   strokeWidth={2}
                   dot={{ r: 3 }}
@@ -117,7 +122,7 @@ export function OilInfo() {
             <table className="w-full text-sm tabular-nums">
               <thead>
                 <tr className="border-b text-left text-xs text-muted-foreground">
-                  <th className="py-1.5 pr-3 font-medium">Temp</th>
+                  <th className="py-1.5 pr-3 font-medium">{t.calibrate.colTemp}</th>
                   {oil.viscosity.map((v) => (
                     <th key={v.temperature} className="py-1.5 pr-3 text-right font-medium">
                       {v.temperature}°
@@ -127,7 +132,7 @@ export function OilInfo() {
               </thead>
               <tbody>
                 <tr>
-                  <td className="py-1.5 pr-3 text-muted-foreground">cSt</td>
+                  <td className="py-1.5 pr-3 text-muted-foreground">{t.oil.viscosityUnit}</td>
                   {oil.viscosity.map((v) => (
                     <td key={v.temperature} className="py-1.5 pr-3 text-right">
                       {v.kinematic.toFixed(0)}

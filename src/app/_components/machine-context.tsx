@@ -18,6 +18,7 @@ import {
   type OilProfile,
   type SimulationSnapshot,
 } from "@/simulation";
+import { useTranslation } from "@/i18n";
 
 export interface DispenseEntry extends DispenseResult {
   id: number;
@@ -95,6 +96,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     buildMachine(DEFAULT_OIL_PROFILE_ID, INITIAL_TEMP, DEFAULT_SPEED),
   );
   const { sim, clock } = machine;
+  const { t } = useTranslation();
 
   const [snapshot, setSnapshot] = useState<SimulationSnapshot>(() => sim.snapshot());
   const [points, setPoints] = useState<Calibration.Point[]>([]);
@@ -175,7 +177,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     const dispenseOne = async () => {
       setError(null);
       if (!sim.store.isReady()) {
-        setError("Calibrate at least two temperatures before automatic dispensing.");
+        setError(t.errors.calibrateTwoAuto);
         return;
       }
       sim.resetContainer();
@@ -199,7 +201,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     const startAuto = () => {
       setError(null);
       if (!sim.store.isReady()) {
-        setError("Calibrate at least two temperatures before starting a cycle.");
+        setError(t.errors.calibrateTwoCycle);
         return;
       }
       if (running) return;
@@ -285,6 +287,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     running,
     log,
     error,
+    t,
   ]);
 
   return <MachineContext.Provider value={value}>{children}</MachineContext.Provider>;

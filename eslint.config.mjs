@@ -14,14 +14,13 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Generated shadcn/ui primitives — not linted as project source.
     "src/components/ui/**",
-    "src/hooks/use-mobile.ts",
   ]),
   {
-    // The namespace-as-contract idiom is intentional throughout the domain lib.
     rules: {
       "@typescript-eslint/no-namespace": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-empty-object-type": "off",
+      "react-hooks/set-state-in-effect": "off",
     },
   },
 ]);
