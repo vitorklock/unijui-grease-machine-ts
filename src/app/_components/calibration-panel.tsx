@@ -14,12 +14,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
-import { useMachine } from "./machine-context";
+import { useMachine, useSnapshot } from "./machine-context";
 
 const QUICK_TEMPS = [10, 20, 28, 35, 40];
 
 export function CalibrationPanel() {
   const m = useMachine();
+  const snapshot = useSnapshot();
   const { t } = useTranslation();
   const [temp, setTemp] = useState(10);
 
@@ -69,11 +70,11 @@ export function CalibrationPanel() {
           </Button>
 
           <div className="flex items-center gap-2">
-            <Badge variant={m.snapshot.ready ? "default" : "outline"}>
-              {m.snapshot.ready ? t.calibrate.ready : t.calibrate.notReady}
+            <Badge variant={snapshot.ready ? "default" : "outline"}>
+              {snapshot.ready ? t.calibrate.ready : t.calibrate.notReady}
             </Badge>
             <span className="text-xs text-muted-foreground">
-              {t.calibrate.completeTemps(m.snapshot.completeTemperatures.length)}
+              {t.calibrate.completeTemps(snapshot.completeTemperatures.length)}
             </span>
           </div>
 

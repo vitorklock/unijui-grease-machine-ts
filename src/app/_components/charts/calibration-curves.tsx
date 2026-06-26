@@ -116,6 +116,7 @@ export function CalibrationCurves() {
                   stroke="var(--chart-3)"
                   dot={false}
                   strokeWidth={2}
+                  isAnimationActive={false}
                 />
               </LineChart>
             </ResponsiveContainer>

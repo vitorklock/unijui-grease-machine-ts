@@ -58,7 +58,6 @@ const DEFAULT_SPEED = 25;
 const INITIAL_TEMP = 22;
 
 interface MachineContextValue {
-  snapshot: SimulationSnapshot;
   temperature: number;
   setTemperature: (t: number) => void;
   oil: OilProfile;
@@ -96,9 +95,24 @@ interface MachineContextValue {
 
 const MachineContext = createContext<MachineContextValue | null>(null);
 
+/**
+ * The live machine snapshot lives in its OWN context because it ticks ~12x/sec
+ * (the scale animates during a pulse). Keeping it out of MachineContext means
+ * the charts, selectors, etc. — which only need stable config — do NOT re-render
+ * on every tick (that churn previously kept recharts re-measuring and restarting
+ * line animations). Only components that show the live scale subscribe here.
+ */
+const SnapshotContext = createContext<SimulationSnapshot | null>(null);
+
 export function useMachine(): MachineContextValue {
   const ctx = useContext(MachineContext);
   if (!ctx) throw new Error("useMachine must be used within <MachineProvider>");
+  return ctx;
+}
+
+export function useSnapshot(): SimulationSnapshot {
+  const ctx = useContext(SnapshotContext);
+  if (!ctx) throw new Error("useSnapshot must be used within <MachineProvider>");
   return ctx;
 }
 
@@ -331,7 +345,6 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     });
 
     return {
-      snapshot,
       temperature,
       setTemperature,
       oil: OIL_PROFILES[oilId],
@@ -372,7 +385,6 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     oilId,
     interpolatorKey,
     speed,
-    snapshot,
     temperature,
     points,
     calibrating,
@@ -387,5 +399,9 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     pushLog,
   ]);
 
-  return <MachineContext.Provider value={value}>{children}</MachineContext.Provider>;
+  return (
+    <MachineContext.Provider value={value}>
+      <SnapshotContext.Provider value={snapshot}>{children}</SnapshotContext.Provider>
+    </MachineContext.Provider>
+  );
 }

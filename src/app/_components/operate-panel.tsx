@@ -16,7 +16,7 @@ import { Slider } from "@/components/ui/slider";
 import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { ControllerSelector } from "./controller-selector";
-import { SPEED_OPTIONS, useMachine } from "./machine-context";
+import { SPEED_OPTIONS, useMachine, useSnapshot } from "./machine-context";
 
 const g = (n: number) => `${n.toFixed(3)} g`;
 const s = (n: number) => `${n.toFixed(3)} s`;
@@ -33,9 +33,10 @@ function missClass(miss: number, target: number): string {
 
 export function OperatePanel() {
   const m = useMachine();
+  const snapshot = useSnapshot();
   const { t } = useTranslation();
   const barMax = Math.max(m.massPerPulse * 1.4, 30);
-  const barPct = Math.min(100, (m.snapshot.scaleWeight / barMax) * 100);
+  const barPct = Math.min(100, (snapshot.scaleWeight / barMax) * 100);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr]">
@@ -83,26 +84,26 @@ export function OperatePanel() {
           </CardHeader>
           <CardContent>
             <div className="font-mono text-4xl font-semibold tabular-nums">
-              {m.snapshot.scaleWeight.toFixed(3)}
+              {snapshot.scaleWeight.toFixed(3)}
               <span className="ml-1 text-lg text-muted-foreground">g</span>
             </div>
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className={cn(
                   "h-full rounded-full transition-[width] duration-75",
-                  m.snapshot.motorRunning ? "bg-chart-1" : "bg-primary/60",
+                  snapshot.motorRunning ? "bg-chart-1" : "bg-primary/60",
                 )}
                 style={{ width: `${barPct}%` }}
               />
             </div>
             <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant={m.snapshot.motorRunning ? "default" : "secondary"}>
-                {m.snapshot.motorRunning ? t.operate.motorRunning : t.operate.motorIdle}
+              <Badge variant={snapshot.motorRunning ? "default" : "secondary"}>
+                {snapshot.motorRunning ? t.operate.motorRunning : t.operate.motorIdle}
               </Badge>
-              <Badge variant={m.snapshot.ready ? "default" : "outline"}>
-                {m.snapshot.ready
+              <Badge variant={snapshot.ready ? "default" : "outline"}>
+                {snapshot.ready
                   ? t.operate.calibrated
-                  : t.operate.needsCalibration(m.snapshot.completeTemperatures.length)}
+                  : t.operate.needsCalibration(snapshot.completeTemperatures.length)}
               </Badge>
             </div>
           </CardContent>
@@ -149,6 +150,7 @@ export function OperatePanel() {
 
 function ManualControls() {
   const m = useMachine();
+  const snapshot = useSnapshot();
   const { t } = useTranslation();
   return (
     <Card>
@@ -173,7 +175,7 @@ function ManualControls() {
           onLostPointerCapture={m.manualOff}
           onContextMenu={(e) => e.preventDefault()}
         >
-          {m.snapshot.motorRunning ? t.operate.running : t.operate.holdToRun}
+          {snapshot.motorRunning ? t.operate.running : t.operate.holdToRun}
         </Button>
         <Button variant="outline" onClick={m.tare}>
           <RotateCcw className="size-4" /> {t.operate.tareScale}
@@ -185,6 +187,7 @@ function ManualControls() {
 
 function AutomaticControls() {
   const m = useMachine();
+  const snapshot = useSnapshot();
   const { t } = useTranslation();
   return (
     <Card>
@@ -228,7 +231,7 @@ function AutomaticControls() {
           ) : (
             <Button
               onClick={m.startAuto}
-              disabled={!m.snapshot.ready || m.dispensing}
+              disabled={!snapshot.ready || m.dispensing}
             >
               <Play className="size-4" /> {t.operate.startCycle}
             </Button>
@@ -236,7 +239,7 @@ function AutomaticControls() {
           <Button
             variant="outline"
             onClick={m.dispenseOne}
-            disabled={m.running || m.dispensing || !m.snapshot.ready}
+            disabled={m.running || m.dispensing || !snapshot.ready}
           >
             {t.operate.dispenseOne}
           </Button>
@@ -245,7 +248,7 @@ function AutomaticControls() {
           </Button>
         </div>
 
-        {!m.snapshot.ready ? (
+        {!snapshot.ready ? (
           <p className="text-xs text-muted-foreground">{t.operate.enableHint}</p>
         ) : null}
       </CardContent>
