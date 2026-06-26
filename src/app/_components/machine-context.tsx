@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -22,6 +23,10 @@ import { useTranslation } from "@/i18n";
 
 export interface DispenseEntry extends DispenseResult {
   id: number;
+  /** Mass the simulator's physics actually delivered for this pulse, in grams. */
+  delivered: number;
+  /** delivered − massTarget: the live over/under-dispense, in grams. */
+  miss: number;
 }
 
 /** Demo speeds: how many virtual seconds pass per wall-clock second. */
@@ -117,10 +122,22 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(id);
   }, [sim]);
 
-  const pushLog = (result: DispenseResult) => {
-    logId.current += 1;
-    setLog((prev) => [{ ...result, id: logId.current }, ...prev].slice(0, 60));
-  };
+  const pushLog = useCallback(
+    (result: DispenseResult) => {
+      logId.current += 1;
+      // Open-loop dispensing doesn't measure mass, so the "miss" is the simulator's
+      // ground-truth delivery for the chosen motor time (the live interpolation
+      // residual). On a real machine you'd only see this by re-attaching the scale.
+      const delivered =
+        result.motorOnTime * sim.physics.flowRate(result.temperature) +
+        sim.physics.drip(result.temperature, result.motorOnTime);
+      const miss = delivered - result.massTarget;
+      setLog((prev) =>
+        [{ ...result, id: logId.current, delivered, miss }, ...prev].slice(0, 60),
+      );
+    },
+    [sim],
+  );
 
   const value = useMemo<MachineContextValue>(() => {
     const setTemperature = (t: number) => {
@@ -288,6 +305,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     log,
     error,
     t,
+    pushLog,
   ]);
 
   return <MachineContext.Provider value={value}>{children}</MachineContext.Provider>;

@@ -20,6 +20,16 @@ import { SPEED_OPTIONS, useMachine } from "./machine-context";
 
 const g = (n: number) => `${n.toFixed(3)} g`;
 const s = (n: number) => `${n.toFixed(3)} s`;
+const signedG = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(3)} g`;
+
+/** Green within 1 % of target, amber when over-dispensing, blue when under. */
+function missClass(miss: number, target: number): string {
+  const pct = target > 0 ? Math.abs(miss / target) : 0;
+  if (pct < 0.01) return "text-emerald-600 dark:text-emerald-400";
+  return miss > 0
+    ? "text-amber-600 dark:text-amber-400"
+    : "text-sky-600 dark:text-sky-400";
+}
 
 export function OperatePanel() {
   const m = useMachine();
@@ -260,7 +270,18 @@ function DispenseLog() {
                 key={entry.id}
                 className="flex items-center justify-between rounded-md border px-3 py-1.5"
               >
-                <span className="font-medium tabular-nums">{g(entry.massTarget)}</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-medium tabular-nums">{g(entry.massTarget)}</span>
+                  <span
+                    className={cn(
+                      "text-xs font-medium tabular-nums",
+                      missClass(entry.miss, entry.massTarget),
+                    )}
+                    title={g(entry.delivered)}
+                  >
+                    {signedG(entry.miss)}
+                  </span>
+                </div>
                 <span className="text-xs text-muted-foreground tabular-nums">
                   {t.operate.pulseDetail(
                     entry.temperature.toFixed(0),
