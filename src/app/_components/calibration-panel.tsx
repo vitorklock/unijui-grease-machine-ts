@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
 import { useMachine } from "./machine-context";
 
-const QUICK_TEMPS = [10, 20, 28, 35];
+const QUICK_TEMPS = [10, 20, 28, 35, 40];
 
 export function CalibrationPanel() {
   const m = useMachine();
