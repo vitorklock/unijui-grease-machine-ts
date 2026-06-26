@@ -14,6 +14,7 @@ export const en = {
     title: "Grease Machine",
     subtitle:
       "Temperature-compensated precision dispenser for thin drip oil. Calibrate, then dispense exact pulses regardless of the weather.",
+    export: "Export",
   },
   tabs: {
     operate: "Operate",

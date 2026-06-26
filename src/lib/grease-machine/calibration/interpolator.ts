@@ -1,5 +1,9 @@
 import { SOLVE_MAX_ITERATIONS, SOLVE_TOLERANCE_S } from "../consts";
-import { InsufficientCalibrationError, TargetBelowDripError } from "../errors";
+import {
+    GreaseMachineError,
+    InsufficientCalibrationError,
+    TargetBelowDripError,
+} from "../errors";
 import { interp1d } from "../math/interp";
 import { dripAt, fitLoading } from "../math/loading";
 import type { Calibration } from "../types";
@@ -84,6 +88,13 @@ export class Interpolator {
     ): Calibration.SolveMotorTime.Results {
         const { massTarget, temperature } = params;
         const flow = this.flowRate(temperature);
+        // A non-physical flow would make the motor time infinite and the dispense
+        // never stop — fail loudly instead of looping forever.
+        if (!Number.isFinite(flow) || flow <= 0) {
+            throw new GreaseMachineError(
+                `Non-physical flow (${flow} g/s) at ${temperature} °C — the calibration data looks corrupt.`,
+            );
+        }
         const dripLimit = interp1d(temperature, this.temps, this.dripLimits);
         const tauLoad = interp1d(temperature, this.temps, this.tauLoads);
 
@@ -96,6 +107,11 @@ export class Interpolator {
             }
             if (Math.abs(next - t) < SOLVE_TOLERANCE_S) return next;
             t = next;
+        }
+        if (!Number.isFinite(t) || t <= 0) {
+            throw new GreaseMachineError(
+                `Could not solve a finite motor time for ${massTarget} g at ${temperature} °C.`,
+            );
         }
         return t;
     }

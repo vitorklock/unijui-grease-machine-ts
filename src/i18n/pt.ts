@@ -14,6 +14,7 @@ export const pt: Messages = {
     title: "Máquina de Lubrificante",
     subtitle:
       "Dispensador de precisão com compensação de temperatura para óleo fino. Calibre e dispense pulsos exatos independente do clima.",
+    export: "Exportar",
   },
   tabs: {
     operate: "Operar",

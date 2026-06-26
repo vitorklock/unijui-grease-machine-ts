@@ -7,6 +7,7 @@ import { CalibrationPanel } from "./calibration-panel";
 import { AccuracyChart } from "./charts/accuracy-chart";
 import { CalibrationCurves } from "./charts/calibration-curves";
 import { CompareChart } from "./charts/compare-chart";
+import { ExportButton } from "./export-button";
 import { LanguageSwitcher } from "./language-switcher";
 import { MachineProvider } from "./machine-context";
 import { OilInfo } from "./oil-info";
@@ -29,18 +30,21 @@ export function MachineView() {
     <MachineProvider>
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-8">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-chart-1">
-              <Droplets className="size-5" />
-            </div>
-            <div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-chart-1">
+                <Droplets className="size-5" />
+              </div>
               <h1 className="text-2xl font-semibold tracking-tight">{t.header.title}</h1>
-              <p className="text-sm text-muted-foreground">{t.header.subtitle}</p>
             </div>
+            <p className="text-sm text-muted-foreground">{t.header.subtitle}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="space-y-1">
             <LanguageSwitcher />
-            <OilSelector />
+            <div className="flex gap-2 items-center">
+              <OilSelector />
+              <ExportButton />
+            </div>
           </div>
         </header>
 

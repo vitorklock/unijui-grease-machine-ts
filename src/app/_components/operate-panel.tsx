@@ -162,9 +162,15 @@ function ManualControls() {
         <Button
           size="lg"
           className="h-20 select-none text-base"
-          onPointerDown={m.manualOn}
+          onPointerDown={(e) => {
+            // Capture the pointer so the release always fires on this button,
+            // even if the pointer slides off — otherwise the motor can stick on.
+            e.currentTarget.setPointerCapture(e.pointerId);
+            m.manualOn();
+          }}
           onPointerUp={m.manualOff}
-          onPointerLeave={m.manualOff}
+          onPointerCancel={m.manualOff}
+          onLostPointerCapture={m.manualOff}
           onContextMenu={(e) => e.preventDefault()}
         >
           {m.snapshot.motorRunning ? t.operate.running : t.operate.holdToRun}

@@ -17,6 +17,7 @@ import {
   OIL_PROFILES,
   SystemClock,
   type OilProfile,
+  type PhysicsConfig,
   type SimulationSnapshot,
 } from "@/simulation";
 import { useTranslation } from "@/i18n";
@@ -27,6 +28,18 @@ export interface DispenseEntry extends DispenseResult {
   delivered: number;
   /** delivered − massTarget: the live over/under-dispense, in grams. */
   miss: number;
+}
+
+/** A full snapshot of the machine state, downloadable for sharing/debugging. */
+export interface MachineExport {
+  exportedAt: string;
+  oil: { id: string; grade: string; physics: PhysicsConfig };
+  ambientTemperature: number;
+  speed: number;
+  settings: { massPerPulse: number; intervalSeconds: number };
+  ready: boolean;
+  calibration: Calibration.StoreJson;
+  log: DispenseEntry[];
 }
 
 /** Demo speeds: how many virtual seconds pass per wall-clock second. */
@@ -64,6 +77,7 @@ interface MachineContextValue {
   log: DispenseEntry[];
   clearLog: () => void;
   error: string | null;
+  exportData: () => MachineExport;
 }
 
 const MachineContext = createContext<MachineContextValue | null>(null);
@@ -258,6 +272,18 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
       setSnapshot(sim.snapshot());
     };
 
+    const profile = OIL_PROFILES[oilId];
+    const exportData = (): MachineExport => ({
+      exportedAt: new Date().toISOString(),
+      oil: { id: profile.id, grade: profile.grade, physics: profile.physics },
+      ambientTemperature: temperature,
+      speed,
+      settings: { massPerPulse, intervalSeconds },
+      ready: sim.store.isReady(),
+      calibration: sim.store.toJSON(),
+      log,
+    });
+
     return {
       snapshot,
       temperature,
@@ -288,6 +314,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
       log,
       clearLog: () => setLog([]),
       error,
+      exportData,
     };
   }, [
     sim,
