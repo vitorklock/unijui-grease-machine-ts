@@ -1,11 +1,20 @@
-import { Interpolator } from "../calibration/interpolator";
-import type { Calibration, Clock, Controller, DispenseResult, Hardware } from "../types";
+import { createInterpolator, DEFAULT_INTERPOLATOR_KEY } from "../calibration/interpolators";
+import type {
+    Calibration,
+    Clock,
+    Controller,
+    DispenseResult,
+    Hardware,
+    Interpolator,
+} from "../types";
 
 export interface AutomaticControllerDeps {
     motor: Hardware.Motor;
     thermometer: Hardware.Thermometer;
     store: Calibration.Store;
     clock: Clock;
+    /** Interpolation strategy to dispense with; defaults to geometric. */
+    interpolatorKey?: Interpolator.Key;
 }
 
 /**
@@ -20,10 +29,13 @@ export class AutomaticController implements Controller.Automatic {
     constructor(private readonly deps: AutomaticControllerDeps) { }
 
     async dispense(massTarget: number): Promise<DispenseResult> {
-        const { motor, thermometer, store, clock } = this.deps;
+        const { motor, thermometer, store, clock, interpolatorKey } = this.deps;
         const temperature = thermometer.readTemperature();
 
-        const interpolator = new Interpolator(store);
+        const interpolator = createInterpolator(
+            interpolatorKey ?? DEFAULT_INTERPOLATOR_KEY,
+            store,
+        );
         const motorOnTime = interpolator.solveMotorTime({ massTarget, temperature });
         const estimatedDrip = interpolator.drip(temperature, motorOnTime);
 

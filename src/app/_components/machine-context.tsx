@@ -9,7 +9,17 @@ import {
   useRef,
   useState,
 } from "react";
-import type { Calibration, Controller, DispenseResult } from "@/lib/grease-machine";
+import {
+  DEFAULT_INTERPOLATOR_KEY,
+  INTERPOLATOR_LIST,
+} from "@/lib/grease-machine";
+import type {
+  Calibration,
+  Controller,
+  DispenseResult,
+  Interpolator,
+  InterpolatorRegistry,
+} from "@/lib/grease-machine";
 import {
   DEFAULT_OIL_PROFILE_ID,
   GreaseMachineSimulation,
@@ -54,6 +64,9 @@ interface MachineContextValue {
   oil: OilProfile;
   oils: OilProfile[];
   setOil: (id: string) => void;
+  interpolatorKey: Interpolator.Key;
+  setInterpolator: (key: Interpolator.Key) => void;
+  interpolators: InterpolatorRegistry.Entry[];
   speed: number;
   setSpeed: (s: number) => void;
   points: Calibration.Point[];
@@ -98,12 +111,18 @@ interface Machine {
   clock: SystemClock;
 }
 
-function buildMachine(oilId: string, temperature: number, speed: number): Machine {
+function buildMachine(
+  oilId: string,
+  temperature: number,
+  speed: number,
+  interpolatorKey: Interpolator.Key,
+): Machine {
   const clock = new SystemClock(speed);
   const sim = new GreaseMachineSimulation({
     physics: OIL_PROFILES[oilId].physics,
     clock,
     ambientTemp: temperature,
+    interpolatorKey,
   });
   return { sim, clock };
 }
@@ -112,8 +131,10 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
   const [oilId, setOilId] = useState(DEFAULT_OIL_PROFILE_ID);
   const [speed, setSpeedState] = useState(DEFAULT_SPEED);
   const [temperature, setTemperatureState] = useState(INITIAL_TEMP);
+  const [interpolatorKey, setInterpolatorKeyState] =
+    useState<Interpolator.Key>(DEFAULT_INTERPOLATOR_KEY);
   const [machine, setMachine] = useState<Machine>(() =>
-    buildMachine(DEFAULT_OIL_PROFILE_ID, INITIAL_TEMP, DEFAULT_SPEED),
+    buildMachine(DEFAULT_OIL_PROFILE_ID, INITIAL_TEMP, DEFAULT_SPEED, DEFAULT_INTERPOLATOR_KEY),
   );
   const { sim, clock } = machine;
   const { t } = useTranslation();
@@ -164,9 +185,10 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
 
     const setOil = (id: string) => {
       if (id === oilId) return;
-      // Switching fluid invalidates calibration — rebuild a fresh machine.
+      // Switching fluid invalidates calibration — rebuild a fresh machine, but
+      // keep the chosen interpolation strategy.
       stopRef.current = true;
-      const next = buildMachine(id, temperature, speed);
+      const next = buildMachine(id, temperature, speed, interpolatorKey);
       setMachine(next);
       setOilId(id);
       setPoints([]);
@@ -174,6 +196,13 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
       setRunning(false);
       setError(null);
       setSnapshot(next.sim.snapshot());
+    };
+
+    // Switch the live controller's interpolation strategy in place — no rebuild,
+    // so calibration and the container are preserved.
+    const setInterpolator = (key: Interpolator.Key) => {
+      sim.setInterpolator(key);
+      setInterpolatorKeyState(key);
     };
 
     const setSpeed = (s: number) => {
@@ -308,6 +337,9 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
       oil: OIL_PROFILES[oilId],
       oils: OIL_PROFILE_LIST,
       setOil,
+      interpolatorKey,
+      setInterpolator,
+      interpolators: INTERPOLATOR_LIST,
       speed,
       setSpeed,
       points,
@@ -338,6 +370,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     sim,
     clock,
     oilId,
+    interpolatorKey,
     speed,
     snapshot,
     temperature,

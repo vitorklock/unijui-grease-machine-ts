@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Interpolator } from "@/lib/grease-machine";
+import { GeometricInterpolator } from "@/lib/grease-machine";
 import { GreaseMachineSimulation } from "./grease-machine-simulation";
 import { calibrate } from "./scenarios/calibration-scenario";
 import { runAccuracyScenario, runCompareScenario } from "./scenarios";
@@ -12,7 +12,7 @@ describe("GreaseMachineSimulation", () => {
         expect(sim.store.isReady()).toBe(true);
         expect(sim.store.completeTemperatures()).toEqual([10, 20, 35]);
 
-        const interp = new Interpolator(sim.store);
+        const interp = new GeometricInterpolator(sim.store);
         expect(interp.flowRate(20)).toBeCloseTo(0.2, 2);
         expect(interp.flowRate(10)).toBeLessThan(interp.flowRate(35));
     });
@@ -20,7 +20,7 @@ describe("GreaseMachineSimulation", () => {
     it("dispenses within a small, consistent error at calibrated and intermediate temps", async () => {
         const sim = new GreaseMachineSimulation();
         await calibrate(sim, [10, 16, 22, 28, 34, 40]);
-        const interp = new Interpolator(sim.store);
+        const interp = new GeometricInterpolator(sim.store);
 
         for (const temperature of [20, 25]) {
             for (const massTarget of [2, 5, 10, 30]) {
@@ -68,17 +68,29 @@ describe("scenarios", () => {
         }
     });
 
-    it("compare scenario: compensated beats fixed-time across temperature", async () => {
+    it("compare scenario: every interpolator beats fixed-time, geometric is best", async () => {
         const result = await runCompareScenario(5, 25);
-        const coldest = result.rows[0];
-        const hottest = result.rows[result.rows.length - 1];
 
-        // Fixed-time dispenser swings hard with temperature...
-        expect(Math.abs(coldest.fixedErrorPct)).toBeGreaterThan(10);
-        expect(Math.abs(hottest.fixedErrorPct)).toBeGreaterThan(10);
-        // ...while the compensated controller stays tight everywhere.
-        for (const row of result.rows) {
-            expect(Math.abs(row.compensatedErrorPct)).toBeLessThan(1);
+        // The naive fixed-time dispenser swings hard at the band edges...
+        const fixedColdest = result.fixed.rows[0];
+        const fixedHottest = result.fixed.rows[result.fixed.rows.length - 1];
+        expect(Math.abs(fixedColdest.errorPct)).toBeGreaterThan(10);
+        expect(Math.abs(fixedHottest.errorPct)).toBeGreaterThan(10);
+
+        // ...while every compensated strategy stays far tighter everywhere.
+        for (const series of result.interpolators) {
+            for (const point of series.rows) {
+                expect(Math.abs(point.errorPct)).toBeLessThan(2);
+            }
         }
+
+        // Geometric is the most accurate strategy and the flagged best.
+        const geo = result.interpolators.find((s) => s.key === "geometric")!;
+        const lin = result.interpolators.find((s) => s.key === "linear")!;
+        expect(geo.meanAbsErrorPct).toBeLessThanOrEqual(lin.meanAbsErrorPct);
+        for (const point of geo.rows) {
+            expect(Math.abs(point.errorPct)).toBeLessThan(0.3);
+        }
+        expect(result.bestKey).toBe("geometric");
     });
 });

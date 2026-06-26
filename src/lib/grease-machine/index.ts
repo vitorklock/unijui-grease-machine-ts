@@ -11,7 +11,7 @@ export * from "./errors";
 export * from "./math/interp";
 export * from "./math/loading";
 export { CalibrationStore } from "./calibration/store";
-export { Interpolator } from "./calibration/interpolator";
+export * from "./calibration/interpolators";
 export * from "./controllers";
 export { CalibrationProcedure } from "./procedures/calibration-procedure";
 export type { CalibrationProcedureDeps } from "./procedures/calibration-procedure";

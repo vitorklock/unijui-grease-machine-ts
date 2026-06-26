@@ -93,6 +93,41 @@ export namespace Calibration {
     }
 }
 
+/** Available calibration interpolation strategies (geometric is the default). */
+export const INTERPOLATOR_KEYS = ["geometric", "linear"] as const;
+
+export namespace Interpolator {
+    export type Key = (typeof INTERPOLATOR_KEYS)[number];
+}
+
+/**
+ * A calibration interpolation strategy. Every strategy fits the SAME
+ * per-temperature model (flow + exponential drip-loading) from the store and
+ * solves the same pulse equation; they differ only in how they interpolate that
+ * model *between* calibrated temperatures (e.g. geometric/log-space vs linear).
+ */
+export interface Interpolator {
+    readonly key: Interpolator.Key;
+    /** Steady mass flow at a temperature, in g/s. */
+    flowRate(temperature: number): number;
+    /** Expected drip for a pulse of the given duration at a temperature, in grams. */
+    drip(temperature: number, pulseDuration: number): number;
+    /** Solve the motor on-time (seconds) for one pulse of massTarget grams. */
+    solveMotorTime(params: Calibration.SolveMotorTime.Params): Calibration.SolveMotorTime.Results;
+}
+
+export namespace InterpolatorRegistry {
+    export interface Entry {
+        key: Interpolator.Key;
+        /** English fallback label; the UI prefers the i18n name for the key. */
+        label: string;
+        description: string;
+        /** Marks the recommended ("best") strategy — geometric. */
+        recommended?: boolean;
+        create(store: Calibration.Store): Interpolator;
+    }
+}
+
 /** Available controllers (no AI controllers — manual + compensated automatic). */
 export const CONTROLLER_KEYS = ["manual", "automatic"] as const;
 
@@ -153,6 +188,8 @@ export namespace ControllerRegistry {
         devices: Hardware.Devices;
         store: Calibration.Store;
         clock: Clock;
+        /** Interpolation strategy the automatic controller dispenses with. */
+        interpolatorKey?: Interpolator.Key;
     }
     export interface Entry<K extends Controller.Key = Controller.Key> {
         key: K;

@@ -1,4 +1,4 @@
-import { Interpolator, PULSE_REGIMES } from "@/lib/grease-machine";
+import { buildModels, GeometricInterpolator, PULSE_REGIMES } from "@/lib/grease-machine";
 import type { Calibration } from "@/lib/grease-machine";
 import { GreaseMachineSimulation } from "../grease-machine-simulation";
 
@@ -45,8 +45,8 @@ export async function runCalibrationScenario(
     const sim = new GreaseMachineSimulation();
     await calibrate(sim, temperatures);
 
-    const models = Interpolator.buildModels(sim.store);
-    const interp = new Interpolator(sim.store);
+    const models = buildModels(sim.store);
+    const interp = new GeometricInterpolator(sim.store);
 
     const minT = Math.min(...temperatures);
     const maxT = Math.max(...temperatures);

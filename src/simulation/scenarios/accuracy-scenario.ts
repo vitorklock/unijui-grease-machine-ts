@@ -1,4 +1,4 @@
-import { Interpolator } from "@/lib/grease-machine";
+import { createInterpolator, DEFAULT_INTERPOLATOR_KEY } from "@/lib/grease-machine";
 import { GreaseMachineSimulation } from "../grease-machine-simulation";
 import { calibrate, DEFAULT_CALIBRATION_TEMPS } from "./calibration-scenario";
 
@@ -32,7 +32,7 @@ export async function runAccuracyScenario(
     const sim = new GreaseMachineSimulation();
     await calibrate(sim, calibrationTemps);
 
-    const interp = new Interpolator(sim.store);
+    const interp = createInterpolator(DEFAULT_INTERPOLATOR_KEY, sim.store);
     const results: AccuracyResult[] = targets.map((massTarget) => {
         const motorOnTime = interp.solveMotorTime({ massTarget, temperature });
         const delivered =

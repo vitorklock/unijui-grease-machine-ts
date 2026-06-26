@@ -117,6 +117,20 @@ export const en = {
     viscosityUnit: "cSt",
     viscosityLegend: "viscosity",
   },
+  interpolator: {
+    pickerLabel: "Interpolation strategy",
+    best: "best",
+    names: {
+      geometric: "Geometric",
+      linear: "Linear",
+    },
+    descriptions: {
+      geometric:
+        "Interpolates flow and drip in log-space — exact for the exponential temperature physics, so it is the most accurate strategy.",
+      linear:
+        "Straight-line interpolation between calibration points. Simple, but biased between them since the real curves are exponential.",
+    },
+  },
   curves: {
     title: "Calibration curves",
     subtitle: (temps: string) =>
@@ -139,12 +153,15 @@ export const en = {
   compare: {
     title: "Compensated vs. fixed-time dispenser",
     subtitle: (target: number, temp: number) =>
-      `Both target ${target} g. The legacy dispenser is set once at ${temp} °C and never adjusts, so it over or under-dispenses as the temperature drifts; the compensated controller holds the dose.`,
-    compensated: "compensated",
+      `Every interpolation strategy targets ${target} g. The legacy dispenser is set once at ${temp} °C and never adjusts, so it over or under-dispenses as the temperature drifts; the compensated strategies hold the dose.`,
     fixedAt: (temp: number) => `fixed-time (set at ${temp} °C)`,
     target: "target",
+    errorTitle: "Interpolation error by strategy",
+    errorSubtitle:
+      "Residual dose error of each interpolation strategy across the calibrated range — lower is better. Switch strategies with the picker in the header; the selected one is highlighted.",
+    perfect: "perfect",
+    meanError: (pct: string) => `mean |error| ${pct}%`,
     colTemp: "Temp",
-    colCompensated: "Compensated",
     colFixed: "Fixed-time",
     colFixedError: "Fixed error",
   },

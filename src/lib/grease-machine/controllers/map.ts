@@ -20,12 +20,13 @@ export const CONTROLLERS: { [K in Controller.Key]: ControllerRegistry.Entry<K> }
         label: "Automatic (compensated)",
         description:
             "Temperature-compensated pulsed dispensing. Reads temperature, interpolates calibration, and runs the motor for the exact computed time.",
-        create: ({ devices, store, clock }) =>
+        create: ({ devices, store, clock, interpolatorKey }) =>
             new AutomaticController({
                 motor: devices.motor,
                 thermometer: devices.thermometer,
                 store,
                 clock,
+                interpolatorKey,
             }),
     },
 };

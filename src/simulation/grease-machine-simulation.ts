@@ -2,9 +2,10 @@ import {
     CalibrationProcedure,
     CalibrationStore,
     createController,
+    DEFAULT_INTERPOLATOR_KEY,
     PULSE_REGIMES,
 } from "@/lib/grease-machine";
-import type { Calibration, Clock, Controller, Hardware } from "@/lib/grease-machine";
+import type { Calibration, Clock, Controller, Hardware, Interpolator } from "@/lib/grease-machine";
 import { ManualClock } from "./clock";
 import { GreasePhysicsModel, type PhysicsConfig } from "./physics";
 import {
@@ -18,6 +19,8 @@ export interface SimulationConfig {
     ambientTemp?: number;
     /** Defaults to an instant ManualClock; pass a SystemClock for the live UI. */
     clock?: Clock;
+    /** Interpolation strategy the automatic controller uses; defaults to geometric. */
+    interpolatorKey?: Interpolator.Key;
 }
 
 /** A renderable snapshot of the machine state for the UI. */
@@ -44,10 +47,12 @@ export class GreaseMachineSimulation {
     readonly scale: SimulatedScale;
     readonly devices: Hardware.Devices;
     readonly store: CalibrationStore;
+    private interpolatorKey: Interpolator.Key;
 
     constructor(config: SimulationConfig = {}) {
         this.physics = new GreasePhysicsModel(config.physics);
         this.clock = config.clock ?? new ManualClock();
+        this.interpolatorKey = config.interpolatorKey ?? DEFAULT_INTERPOLATOR_KEY;
         this.thermometer = new SimulatedThermometer(config.ambientTemp ?? 20);
         this.motor = new SimulatedMotor(this.clock, this.thermometer);
         this.scale = new SimulatedScale(this.motor, this.physics, this.clock);
@@ -64,6 +69,11 @@ export class GreaseMachineSimulation {
         this.thermometer.temperature = temperature;
     }
 
+    /** Choose the interpolation strategy the automatic controller dispenses with. */
+    setInterpolator(key: Interpolator.Key): void {
+        this.interpolatorKey = key;
+    }
+
     /** Empty the measured container (resets the motor's on-time history). */
     resetContainer(): void {
         this.motor.reset();
@@ -75,6 +85,7 @@ export class GreaseMachineSimulation {
             devices: this.devices,
             store: this.store,
             clock: this.clock,
+            interpolatorKey: this.interpolatorKey,
         });
     }
 
