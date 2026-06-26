@@ -1,6 +1,18 @@
-import { buildModels, GeometricInterpolator, PULSE_REGIMES } from "@/lib/grease-machine";
-import type { Calibration } from "@/lib/grease-machine";
+import {
+    buildModels,
+    createInterpolator,
+    DEFAULT_INTERPOLATOR_KEY,
+    PULSE_REGIMES,
+} from "@/lib/grease-machine";
+import type { Calibration, Interpolator } from "@/lib/grease-machine";
 import { GreaseMachineSimulation } from "../grease-machine-simulation";
+import type { PhysicsConfig } from "../physics";
+
+/** Selects the fluid + interpolation strategy a scenario runs against. */
+export interface ScenarioOptions {
+    physics?: Partial<PhysicsConfig>;
+    interpolatorKey?: Interpolator.Key;
+}
 
 export interface CalibrationCurvePoint {
     temperature: number;
@@ -41,12 +53,16 @@ export async function calibrate(
 
 export async function runCalibrationScenario(
     temperatures: number[] = DEFAULT_CALIBRATION_TEMPS,
+    options: ScenarioOptions = {},
 ): Promise<CalibrationScenarioResult> {
-    const sim = new GreaseMachineSimulation();
+    const sim = new GreaseMachineSimulation({ physics: options.physics });
     await calibrate(sim, temperatures);
 
     const models = buildModels(sim.store);
-    const interp = new GeometricInterpolator(sim.store);
+    const interp = createInterpolator(
+        options.interpolatorKey ?? DEFAULT_INTERPOLATOR_KEY,
+        sim.store,
+    );
 
     const minT = Math.min(...temperatures);
     const maxT = Math.max(...temperatures);

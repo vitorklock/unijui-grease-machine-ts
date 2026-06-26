@@ -1,6 +1,10 @@
 import { createInterpolator, DEFAULT_INTERPOLATOR_KEY } from "@/lib/grease-machine";
 import { GreaseMachineSimulation } from "../grease-machine-simulation";
-import { calibrate, DEFAULT_CALIBRATION_TEMPS } from "./calibration-scenario";
+import {
+    calibrate,
+    DEFAULT_CALIBRATION_TEMPS,
+    type ScenarioOptions,
+} from "./calibration-scenario";
 
 export interface AccuracyResult {
     massTarget: number;
@@ -28,11 +32,15 @@ export async function runAccuracyScenario(
     temperature = 25,
     targets: number[] = DEFAULT_ACCURACY_TARGETS,
     calibrationTemps: number[] = DEFAULT_CALIBRATION_TEMPS,
+    options: ScenarioOptions = {},
 ): Promise<AccuracyScenarioResult> {
-    const sim = new GreaseMachineSimulation();
+    const sim = new GreaseMachineSimulation({ physics: options.physics });
     await calibrate(sim, calibrationTemps);
 
-    const interp = createInterpolator(DEFAULT_INTERPOLATOR_KEY, sim.store);
+    const interp = createInterpolator(
+        options.interpolatorKey ?? DEFAULT_INTERPOLATOR_KEY,
+        sim.store,
+    );
     const results: AccuracyResult[] = targets.map((massTarget) => {
         const motorOnTime = interp.solveMotorTime({ massTarget, temperature });
         const delivered =

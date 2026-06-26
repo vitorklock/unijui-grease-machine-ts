@@ -2,7 +2,11 @@ import { INTERPOLATOR_LIST } from "@/lib/grease-machine";
 import type { Interpolator } from "@/lib/grease-machine";
 import { GreaseMachineSimulation } from "../grease-machine-simulation";
 import { GreasePhysicsModel } from "../physics";
-import { calibrate, DEFAULT_CALIBRATION_TEMPS } from "./calibration-scenario";
+import {
+    calibrate,
+    DEFAULT_CALIBRATION_TEMPS,
+    type ScenarioOptions,
+} from "./calibration-scenario";
 
 /** One (temperature, delivered, error) sample of a dispenser's behavior. */
 export interface CompareSeriesPoint {
@@ -89,8 +93,9 @@ export async function runCompareScenario(
     fixedCalibrationTemp = 25,
     temps: number[] = DEFAULT_COMPARE_TEMPS,
     calibrationTemps: number[] = DEFAULT_CALIBRATION_TEMPS,
+    options: ScenarioOptions = {},
 ): Promise<CompareScenarioResult> {
-    const sim = new GreaseMachineSimulation();
+    const sim = new GreaseMachineSimulation({ physics: options.physics });
     await calibrate(sim, calibrationTemps);
     const physics = sim.physics;
 

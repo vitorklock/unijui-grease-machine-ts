@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import {
   Bar,
@@ -21,21 +20,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useTranslation } from "@/i18n";
-import { runAccuracyScenario, type AccuracyScenarioResult } from "@/simulation";
+import { runAccuracyScenario } from "@/simulation";
+import { useMachine } from "../machine-context";
+import { RunConfig } from "./run-config";
+import { useChartData } from "./use-chart-data";
 
 export function AccuracyChart() {
   const { t } = useTranslation();
-  const [data, setData] = useState<AccuracyScenarioResult | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    runAccuracyScenario(25).then((r) => {
-      if (active) setData(r);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { oil, interpolatorKey } = useMachine();
+  const data = useChartData(`Accuracy · ${oil.id} · ${interpolatorKey}`, () =>
+    runAccuracyScenario(25, undefined, undefined, { physics: oil.physics, interpolatorKey }),
+  );
 
   const chartData =
     data?.results.map((r) => ({
@@ -53,6 +48,7 @@ export function AccuracyChart() {
       <CardHeader>
         <CardTitle>{t.accuracy.title}</CardTitle>
         <CardDescription>{t.accuracy.subtitle(meanAbs.toFixed(2))}</CardDescription>
+        <RunConfig />
       </CardHeader>
       <CardContent>
         {!data ? (
@@ -81,7 +77,7 @@ export function AccuracyChart() {
                       fontSize: 12,
                     }}
                   />
-                  <Bar dataKey="errorPct" radius={[4, 4, 0, 0]}>
+                  <Bar dataKey="errorPct" radius={[4, 4, 0, 0]} isAnimationActive={false}>
                     {chartData.map((d) => (
                       <Cell
                         key={d.label}

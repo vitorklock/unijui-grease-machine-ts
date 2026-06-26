@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Loader2 } from "lucide-react";
 import {
   CartesianGrid,
@@ -23,6 +23,8 @@ import { useTranslation } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { runCompareScenario, type CompareScenarioResult } from "@/simulation";
 import { useMachine } from "../machine-context";
+import { RunConfig } from "./run-config";
+import { useChartData } from "./use-chart-data";
 
 /** Pulse mass every dispenser targets, in grams. */
 const MASS_TARGET_G = 10;
@@ -47,18 +49,12 @@ const TOOLTIP_STYLE = {
 
 export function CompareChart() {
   const { t } = useTranslation();
-  const { interpolatorKey } = useMachine();
-  const [data, setData] = useState<CompareScenarioResult | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    runCompareScenario(MASS_TARGET_G, FIXED_CALIBRATION_TEMP_C).then((r) => {
-      if (active) setData(r);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { oil, interpolatorKey } = useMachine();
+  const data = useChartData(`Compare · ${oil.id}`, () =>
+    runCompareScenario(MASS_TARGET_G, FIXED_CALIBRATION_TEMP_C, undefined, undefined, {
+      physics: oil.physics,
+    }),
+  );
 
   // Pivot the tidy per-strategy series into the flat rows recharts wants: one row
   // per swept temperature, with a column per interpolator key (+ fixed-time).
@@ -103,6 +99,7 @@ export function CompareChart() {
           <CardDescription>
             {t.compare.subtitle(data.massTarget, data.fixedCalibrationTemp)}
           </CardDescription>
+          <RunConfig interpolator={false} />
         </CardHeader>
         <CardContent>
           <div className="h-80 w-full">

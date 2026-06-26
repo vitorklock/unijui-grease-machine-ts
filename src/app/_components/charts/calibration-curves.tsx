@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import {
   CartesianGrid,
@@ -20,21 +19,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useTranslation } from "@/i18n";
-import { runCalibrationScenario, type CalibrationScenarioResult } from "@/simulation";
+import { runCalibrationScenario } from "@/simulation";
+import { useMachine } from "../machine-context";
+import { RunConfig } from "./run-config";
+import { useChartData } from "./use-chart-data";
 
 export function CalibrationCurves() {
   const { t } = useTranslation();
-  const [data, setData] = useState<CalibrationScenarioResult | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    runCalibrationScenario().then((r) => {
-      if (active) setData(r);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { oil, interpolatorKey } = useMachine();
+  const data = useChartData(`Curves · ${oil.id} · ${interpolatorKey}`, () =>
+    runCalibrationScenario(undefined, { physics: oil.physics, interpolatorKey }),
+  );
 
   return (
     <Card>
@@ -43,6 +38,7 @@ export function CalibrationCurves() {
         <CardDescription>
           {t.curves.subtitle((data?.temperatures ?? [10, 20, 35]).join(", "))}
         </CardDescription>
+        <RunConfig />
       </CardHeader>
       <CardContent>
         {!data ? (
@@ -100,6 +96,7 @@ export function CalibrationCurves() {
                   stroke="var(--chart-1)"
                   dot={false}
                   strokeWidth={2}
+                  isAnimationActive={false}
                 />
                 <Line
                   yAxisId="drip"
@@ -109,6 +106,7 @@ export function CalibrationCurves() {
                   stroke="var(--chart-2)"
                   dot={false}
                   strokeWidth={2}
+                  isAnimationActive={false}
                 />
                 <Line
                   yAxisId="drip"
