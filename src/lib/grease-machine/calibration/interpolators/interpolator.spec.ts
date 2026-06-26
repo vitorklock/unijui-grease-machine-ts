@@ -105,10 +105,24 @@ describe("GeometricInterpolator", () => {
         expect(Number.isFinite(t)).toBe(true);
     });
 
-    it("clamps flow below/above the calibrated temperature band", () => {
+    it("extrapolates flow beyond the band by extending the end slope in log-space", () => {
         const interp = new GeometricInterpolator(buildStore(ROWS));
-        expect(interp.flowRate(-5)).toBeCloseTo(15.5, 6); // clamp to coldest
-        expect(interp.flowRate(80)).toBeCloseTo(29.0, 6); // clamp to hottest
+        // Below the band: continue the FIRST log-space segment's slope.
+        const lowSlope = Math.log(20.0 / 15.5) / (20 - 10);
+        expect(interp.flowRate(-5)).toBeCloseTo(
+            Math.exp(Math.log(15.5) + (-5 - 10) * lowSlope),
+            6,
+        );
+        // Above the band: continue the LAST log-space segment's slope.
+        const highSlope = Math.log(29.0 / 20.0) / (35 - 20);
+        expect(interp.flowRate(80)).toBeCloseTo(
+            Math.exp(Math.log(29.0) + (80 - 35) * highSlope),
+            6,
+        );
+        // The tails follow the trend (not a flat clamp): colder dips below the
+        // coldest sample, hotter rises above the hottest.
+        expect(interp.flowRate(-5)).toBeLessThan(15.5);
+        expect(interp.flowRate(80)).toBeGreaterThan(29.0);
     });
 
     it("throws TargetBelowDrip for an unachievable (drip-dominated) target", () => {

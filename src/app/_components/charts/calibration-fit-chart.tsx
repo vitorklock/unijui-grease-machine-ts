@@ -41,22 +41,32 @@ export const CalibrationFitChart = memo(function CalibrationFitChart() {
 
     const interp = createInterpolator(interpolatorKey, store);
     const temps = models.map((m) => m.temperature);
-    const minT = Math.min(...temps);
     const maxT = Math.max(...temps);
-    const steps = 40;
+    // Fixed, generous window so the predicted curve reads well regardless of
+    // where the calibration points sit: a static -10 °C floor up to 30 °C past
+    // the hottest calibration point. Outside the calibrated band the
+    // interpolators extrapolate (extend the end-segment trend in their own
+    // space), so these tails show the model's real prediction, not a flat clamp.
+    const lowT = -10;
+    const highT = maxT + 30;
+    const steps = 80;
     const flowByTemp = new Map(models.map((m) => [m.temperature, m.flow]));
 
     const sweep = Array.from(
       { length: steps + 1 },
-      (_, i) => minT + ((maxT - minT) * i) / steps,
+      (_, i) => lowT + ((highT - lowT) * i) / steps,
     );
+    // Include the exact calibration temps so the curve passes through the
+    // breakpoints and the clamp kinks render crisply.
     const allTemps = Array.from(new Set([...sweep, ...temps])).sort((a, b) => a - b);
 
-    return allTemps.map((temperature) => ({
+    const series = allTemps.map((temperature) => ({
       temperature,
       flowInterp: interp.flowRate(temperature),
       flowMeasured: flowByTemp.get(temperature) ?? null,
     }));
+
+    return { series, domain: [lowT, highT] as [number, number] };
   }, [points, interpolatorKey]);
 
   return (
@@ -73,12 +83,12 @@ export const CalibrationFitChart = memo(function CalibrationFitChart() {
           <>
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={data} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
+                <ComposedChart data={data.series} margin={{ top: 8, right: 16, bottom: 8, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis
                     dataKey="temperature"
                     type="number"
-                    domain={["dataMin", "dataMax"]}
+                    domain={data.domain}
                     tickFormatter={(v) => `${Number(v).toFixed(0)}°`}
                     stroke="var(--muted-foreground)"
                     fontSize={12}

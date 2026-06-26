@@ -21,9 +21,13 @@ export class ArrheniusInterpolator extends BaseInterpolator implements Interpola
 
     protected interp(temperature: number, values: readonly number[]): number {
         // 1/T(K) decreases as Celsius rises, so reverse both arrays to keep
-        // interp1d's sample points ascending (it needs xs sorted, and clamps).
+        // interp1d's sample points ascending (it needs xs sorted). Extrapolating
+        // the end slope in this space gives a physical Arrhenius tail outside the
+        // calibrated band.
         const invKelvin = this.temps.map((c) => 1 / (c + KELVIN)).reverse();
         const logs = values.map((v) => Math.log(v)).reverse();
-        return Math.exp(interp1d(1 / (temperature + KELVIN), invKelvin, logs));
+        return Math.exp(
+            interp1d(1 / (temperature + KELVIN), invKelvin, logs, { extrapolate: true }),
+        );
     }
 }

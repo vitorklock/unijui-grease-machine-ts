@@ -13,6 +13,7 @@ export class LinearInterpolator extends BaseInterpolator implements Interpolator
     readonly key = "linear" as const;
 
     protected interp(temperature: number, values: readonly number[]): number {
-        return interp1d(temperature, this.temps, values);
+        // Extend the end slope outside the calibrated band (a straight-line tail).
+        return interp1d(temperature, this.temps, values, { extrapolate: true });
     }
 }

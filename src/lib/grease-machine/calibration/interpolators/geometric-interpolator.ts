@@ -15,6 +15,10 @@ export class GeometricInterpolator extends BaseInterpolator implements Interpola
     readonly key = "geometric" as const;
 
     protected interp(temperature: number, values: readonly number[]): number {
-        return Math.exp(interp1d(temperature, this.temps, values.map(Math.log)));
+        // Extrapolate outside the calibrated band: extending the end slope in
+        // log-space gives a smooth exponential tail tangent to the curve.
+        return Math.exp(
+            interp1d(temperature, this.temps, values.map(Math.log), { extrapolate: true }),
+        );
     }
 }
