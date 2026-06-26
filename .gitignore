@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated data export (pnpm script export-paper-data) — remove to track it
+/paper-data/
