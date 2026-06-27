@@ -24,9 +24,9 @@ export const INTERPOLATORS: { [K in Interpolator.Key]: InterpolatorRegistry.Entr
     },
     arrhenius: {
         key: "arrhenius",
-        label: "Arrhenius (1/T)",
+        label: "Arrhenius-Andrade (1/T)",
         description:
-            "Interpolates the logarithm of flow and drip against inverse absolute temperature (1/T in kelvin) — the textbook Andrade/Arrhenius viscosity law. The physically-canonical fit for real oils over a wide span.",
+            "Interpolates the logarithm of flow and drip against inverse absolute temperature (1/T in kelvin) — the textbook Arrhenius-Andrade viscosity law. The physically-canonical fit for real oils over a wide span.",
         create: (store) => new ArrheniusInterpolator(store),
     },
     linear: {

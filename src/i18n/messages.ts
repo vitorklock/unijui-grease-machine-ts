@@ -131,14 +131,14 @@ export const en = {
     best: "best",
     names: {
       geometric: "Geometric",
-      arrhenius: "Arrhenius",
+      arrhenius: "Arrhenius-Andrade",
       linear: "Linear",
     },
     descriptions: {
       geometric:
         "Interpolates flow and drip in log-space — exact for the exponential temperature physics, so it is the most accurate strategy.",
       arrhenius:
-        "Interpolates in log-space against 1/T (kelvin), the textbook Arrhenius viscosity law — the canonical fit for real oils.",
+        "Interpolates in log-space against 1/T (kelvin), the textbook Arrhenius-Andrade viscosity law — the canonical fit for real oils.",
       linear:
         "Straight-line interpolation between calibration points. Simple, but biased between them since the real curves are exponential.",
     },

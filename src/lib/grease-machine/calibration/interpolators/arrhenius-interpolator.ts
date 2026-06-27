@@ -8,7 +8,7 @@ const KELVIN = 273.15;
 /**
  * Arrhenius interpolation: interpolate the logarithm of each model quantity
  * linearly against the INVERSE ABSOLUTE temperature (1/T in kelvin), then
- * exponentiate. This is the textbook Andrade/Arrhenius law for viscosity —
+ * exponentiate. This is the textbook Arrhenius-Andrade law for viscosity —
  * ln(μ) = A + B/T — and since flow ≈ 1/μ, ln(flow) is linear in 1/T. It is the
  * physically-canonical fit for real oils across a wide temperature span.
  *

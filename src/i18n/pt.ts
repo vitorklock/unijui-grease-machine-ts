@@ -133,14 +133,14 @@ export const pt: Messages = {
     best: "melhor",
     names: {
       geometric: "Geométrica",
-      arrhenius: "Arrhenius",
+      arrhenius: "Arrhenius-Andrade",
       linear: "Linear",
     },
     descriptions: {
       geometric:
         "Interpola vazão e escoamento em escala logarítmica — exata para a física exponencial da temperatura, sendo a estratégia mais precisa.",
       arrhenius:
-        "Interpola em escala logarítmica contra 1/T (kelvin), a lei de viscosidade de Arrhenius — o ajuste canônico para óleos reais.",
+        "Interpola em escala logarítmica contra 1/T (kelvin), a lei de viscosidade de Arrhenius-Andrade — o ajuste canônico para óleos reais.",
       linear:
         "Interpolação em linha reta entre pontos de calibração. Simples, mas enviesada entre eles, já que as curvas reais são exponenciais.",
     },

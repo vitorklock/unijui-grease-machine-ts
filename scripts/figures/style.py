@@ -12,7 +12,7 @@ OILS = ["iso-vg-32", "iso-vg-22", "iso-vg-10"]
 OIL_LABELS = {"iso-vg-32": "ISO VG 32", "iso-vg-22": "ISO VG 22", "iso-vg-10": "ISO VG 10"}
 
 INTERPS = ["geometric", "arrhenius", "linear"]
-INTERP_LABELS = {"geometric": "Geometric", "arrhenius": "Arrhenius", "linear": "Linear"}
+INTERP_LABELS = {"geometric": "Geometric", "arrhenius": "Arrhenius-Andrade", "linear": "Linear"}
 
 # --- palette -----------------------------------------------------------------
 OIL_COLOR = {"iso-vg-32": "#1f6feb", "iso-vg-22": "#0d9488", "iso-vg-10": "#ea580c"}
