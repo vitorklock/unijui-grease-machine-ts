@@ -34,9 +34,9 @@ import { useTranslation } from "@/i18n";
 
 export interface DispenseEntry extends DispenseResult {
   id: number;
-  /** Mass the simulator's physics actually delivered for this pulse, in grams. */
+  /** Mass the scale measured for this pulse once the drip settled, in grams. */
   delivered: number;
-  /** delivered − massTarget: the live over/under-dispense, in grams. */
+  /** delivered − massTarget: the measured over/under-dispense, in grams. */
   miss: number;
 }
 
@@ -177,12 +177,12 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
   const pushLog = useCallback(
     (result: DispenseResult) => {
       logId.current += 1;
-      // Open-loop dispensing doesn't measure mass, so the "miss" is the simulator's
-      // ground-truth delivery for the chosen motor time (the live interpolation
-      // residual). On a real machine you'd only see this by re-attaching the scale.
-      const delivered =
-        result.motorOnTime * sim.physics.flowRate(result.temperature) +
-        sim.physics.drip(result.temperature, result.motorOnTime);
+      // Record what the scale actually measured for this pulse. Callers log only
+      // after the drip has settled (see the dispense flow), so this equals the
+      // live scale reading exactly — no transient gap between the two. Open-loop
+      // control never reads the scale during a pulse; this is the demo
+      // re-attaching it to show the true delivered mass and its miss vs target.
+      const delivered = sim.scale.readWeight();
       const miss = delivered - result.massTarget;
       setLog((prev) =>
         [{ ...result, id: logId.current, delivered, miss }, ...prev].slice(0, 60),
@@ -258,11 +258,16 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
         setError(t.errors.calibrateTwoAuto);
         return;
       }
+      stopRef.current = false;
       busyRef.current = true;
       setDispensing(true);
       sim.resetContainer();
       try {
-        pushLog(await sim.controller("automatic").dispense(massPerPulse));
+        const result = await sim.controller("automatic").dispense(massPerPulse);
+        // Wait for the drip to finish settling before recording the pulse, so the
+        // logged mass equals what the live scale settles to (no transient gap).
+        await waitInterruptible(sim.physics.dripSettlingDuration(result.temperature));
+        pushLog(result);
       } catch (e) {
         setError(errorMessage(e));
       } finally {
@@ -299,18 +304,24 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
           busyRef.current = true;
           setDispensing(true);
           sim.resetContainer();
+          let result: DispenseResult;
           try {
-            pushLog(await auto.dispense(massPerPulse));
+            result = await auto.dispense(massPerPulse);
           } catch (e) {
             setError(errorMessage(e));
             busyRef.current = false;
             setDispensing(false);
             break;
           }
+          // Let the drip settle (never longer than the interval) before logging,
+          // so the recorded mass matches the scale reading shown for this pulse.
+          const settle = sim.physics.dripSettlingDuration(result.temperature);
+          await waitInterruptible(Math.min(settle, intervalSeconds));
+          pushLog(result);
           busyRef.current = false;
           setDispensing(false);
           if (stopRef.current) break;
-          await waitInterruptible(intervalSeconds);
+          await waitInterruptible(Math.max(0, intervalSeconds - settle));
         }
         setRunning(false);
       })();
