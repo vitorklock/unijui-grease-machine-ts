@@ -152,4 +152,4 @@ The app is a Next.js interface and the sole holder of React. It presents the mac
 - [Control library](./control-library.md) — the grease-machine control library in depth.
 - [Simulation](./simulation.md) — the physics simulation & test harness.
 - [Results](./results.md) — the exported paper-data datasets & results.
-- [README](./README.md) — index & system overview.
+- [README](../README.md) — index & system overview.

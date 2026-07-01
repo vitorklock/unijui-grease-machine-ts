@@ -145,7 +145,7 @@ Notes:
 
 ## See also
 
-- [System overview](./README.md) — index and orientation.
+- [System overview](../README.md) — index and orientation.
 - [Architecture](./architecture.md) — the layered one-way architecture and the detachable control library.
 - [Control library](./control-library.md) — the calibration model, interpolators, and pulse solver these datasets exercise.
 - [Simulation](./simulation.md) — the physics ground truth and the test harness that generates this data.

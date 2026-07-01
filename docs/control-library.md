@@ -564,7 +564,7 @@ All constants are in [consts.ts](../src/lib/grease-machine/consts.ts), with unit
 
 ## See also
 
-- [System overview and index](./README.md)
+- [System overview and index](../README.md)
 - [Layered architecture and the detachable control library](./architecture.md)
 - [The physics simulation and test harness](./simulation.md)
 - [Exported paper-data datasets and results](./results.md)

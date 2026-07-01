@@ -341,7 +341,7 @@ It returns `CompareScenarioResult` ([compare-scenario.ts](../src/simulation/scen
 
 ## See also
 
-- [README.md](./README.md) — index and system overview
+- [README.md](../README.md) — index and system overview
 - [architecture.md](./architecture.md) — layered one-way architecture and the detachable control library
 - [control-library.md](./control-library.md) — the grease-machine control library in depth
 - [results.md](./results.md) — the exported paper-data datasets and results
