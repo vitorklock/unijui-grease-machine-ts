@@ -12,9 +12,13 @@ const KELVIN = 273.15;
  * ln(μ) = A + B/T — and since flow ≈ 1/μ, ln(flow) is linear in 1/T. It is the
  * physically-canonical fit for real oils across a wide temperature span.
  *
- * Note: this simulator's flow is exp(k·T) in *Celsius*, for which the geometric
- * strategy is exact and Arrhenius carries a tiny residual; on real Arrhenius
- * data the ranking flips. Which interpolator is "best" tracks the physics.
+ * The simulation's ground-truth physics follows exactly this law (every quantity
+ * is exp of a linear function of 1/T), so ln(value) is linear in 1/T and this
+ * strategy reconstructs it EXACTLY between calibration points — limited only by
+ * calibration discretization. That makes it the most accurate strategy here and
+ * the recommended default; the geometric (log-in-Celsius) strategy carries a
+ * small residual. On data shaped differently the ranking would shift, so which
+ * interpolator is "best" tracks the physics of the underlying data.
  */
 export class ArrheniusInterpolator extends BaseInterpolator implements Interpolator {
     readonly key = "arrhenius" as const;

@@ -68,7 +68,7 @@ describe("scenarios", () => {
         }
     });
 
-    it("compare scenario: every interpolator beats fixed-time, geometric is best", async () => {
+    it("compare scenario: every interpolator beats fixed-time, arrhenius is best", async () => {
         const result = await runCompareScenario(5, 25);
 
         // The naive fixed-time dispenser swings hard at the band edges...
@@ -84,13 +84,17 @@ describe("scenarios", () => {
             }
         }
 
-        // Geometric is the most accurate strategy and the flagged best.
+        // The ground truth is Arrhenius (exp in 1/T), so the Arrhenius strategy
+        // reconstructs it exactly; geometric is a close approximation and linear
+        // the loosest — the ordering is arrhenius <= geometric <= linear.
+        const arr = result.interpolators.find((s) => s.key === "arrhenius")!;
         const geo = result.interpolators.find((s) => s.key === "geometric")!;
         const lin = result.interpolators.find((s) => s.key === "linear")!;
+        expect(arr.meanAbsErrorPct).toBeLessThanOrEqual(geo.meanAbsErrorPct);
         expect(geo.meanAbsErrorPct).toBeLessThanOrEqual(lin.meanAbsErrorPct);
-        for (const point of geo.rows) {
-            expect(Math.abs(point.errorPct)).toBeLessThan(0.3);
+        for (const point of arr.rows) {
+            expect(Math.abs(point.errorPct)).toBeLessThan(0.1);
         }
-        expect(result.bestKey).toBe("geometric");
+        expect(result.bestKey).toBe("arrhenius");
     });
 });

@@ -4,12 +4,14 @@ import { BaseInterpolator } from "./base-interpolator";
 
 /**
  * Geometric (log-space) interpolation: interpolate the logarithm of each model
- * quantity linearly over temperature, then exponentiate. Flow, the drip limit,
- * and the loading time constant all vary roughly as exp(k·T) with temperature
- * (Arrhenius), so a straight line over them overshoots on the convex side and
- * leaves a percent-level bias between calibration points. Interpolating in
- * log-space is exact for a pure exponential and removes almost all of that bias
- * — this is the recommended strategy.
+ * quantity linearly over temperature (in °C), then exponentiate. Flow, the drip
+ * limit, and the loading time constant all vary roughly exponentially with
+ * temperature, so a straight line over the raw values overshoots on the convex
+ * side and leaves a percent-level bias between calibration points; interpolating
+ * in log-space removes almost all of it. This is exact for a pure exponential in
+ * Celsius, and a simple, close approximation to the oil's true Arrhenius physics
+ * (which is exponential in 1/T) — a hair behind the {@link ArrheniusInterpolator}
+ * here, still far tighter than linear.
  */
 export class GeometricInterpolator extends BaseInterpolator implements Interpolator {
     readonly key = "geometric" as const;

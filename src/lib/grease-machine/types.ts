@@ -93,8 +93,8 @@ export namespace Calibration {
     }
 }
 
-/** Available calibration interpolation strategies (geometric is the default). */
-export const INTERPOLATOR_KEYS = ["geometric", "arrhenius", "linear"] as const;
+/** Available calibration interpolation strategies (arrhenius is the default). */
+export const INTERPOLATOR_KEYS = ["arrhenius", "geometric", "linear"] as const;
 
 export namespace Interpolator {
     export type Key = (typeof INTERPOLATOR_KEYS)[number];
@@ -122,7 +122,7 @@ export namespace InterpolatorRegistry {
         /** English fallback label; the UI prefers the i18n name for the key. */
         label: string;
         description: string;
-        /** Marks the recommended ("best") strategy — geometric. */
+        /** Marks the recommended ("best") strategy — arrhenius. */
         recommended?: boolean;
         create(store: Calibration.Store): Interpolator;
     }

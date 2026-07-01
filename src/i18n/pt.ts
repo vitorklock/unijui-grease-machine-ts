@@ -138,9 +138,9 @@ export const pt: Messages = {
     },
     descriptions: {
       geometric:
-        "Interpola vazão e escoamento em escala logarítmica — exata para a física exponencial da temperatura, sendo a estratégia mais precisa.",
+        "Interpola vazão e escoamento em escala logarítmica sobre a temperatura (°C) — uma aproximação simples e próxima da física de Arrhenius, um pouco atrás dela em precisão.",
       arrhenius:
-        "Interpola em escala logarítmica contra 1/T (kelvin), a lei de viscosidade de Arrhenius-Andrade — o ajuste canônico para óleos reais.",
+        "Interpola em escala logarítmica contra 1/T (kelvin), a lei de viscosidade de Arrhenius-Andrade que o óleo segue — a estratégia exata e recomendada.",
       linear:
         "Interpolação em linha reta entre pontos de calibração. Simples, mas enviesada entre eles, já que as curvas reais são exponenciais.",
     },

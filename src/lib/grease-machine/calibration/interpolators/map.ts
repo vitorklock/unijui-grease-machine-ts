@@ -5,7 +5,7 @@ import { GeometricInterpolator } from "./geometric-interpolator";
 import { LinearInterpolator } from "./linear-interpolator";
 
 /** The default (recommended/best) interpolation strategy. */
-export const DEFAULT_INTERPOLATOR_KEY: Interpolator.Key = "geometric";
+export const DEFAULT_INTERPOLATOR_KEY: Interpolator.Key = "arrhenius";
 
 /**
  * Interpolator registry: key → factory(store). The UI iterates this to build a
@@ -14,20 +14,20 @@ export const DEFAULT_INTERPOLATOR_KEY: Interpolator.Key = "geometric";
  * INTERPOLATOR_KEYS).
  */
 export const INTERPOLATORS: { [K in Interpolator.Key]: InterpolatorRegistry.Entry } = {
-    geometric: {
-        key: "geometric",
-        label: "Geometric (log-space)",
-        recommended: true,
-        description:
-            "Interpolates the logarithm of flow and drip linearly over temperature, then exponentiates. Exact for the exp(k·T) physics, so it is near-perfect between calibration points.",
-        create: (store) => new GeometricInterpolator(store),
-    },
     arrhenius: {
         key: "arrhenius",
         label: "Arrhenius-Andrade (1/T)",
+        recommended: true,
         description:
-            "Interpolates the logarithm of flow and drip against inverse absolute temperature (1/T in kelvin) — the textbook Arrhenius-Andrade viscosity law. The physically-canonical fit for real oils over a wide span.",
+            "Interpolates the logarithm of flow and drip against inverse absolute temperature (1/T in kelvin) — the textbook Arrhenius-Andrade viscosity law the oil physics follows, so it is the exact fit here and the physically-canonical choice for real oils.",
         create: (store) => new ArrheniusInterpolator(store),
+    },
+    geometric: {
+        key: "geometric",
+        label: "Geometric (log-space)",
+        description:
+            "Interpolates the logarithm of flow and drip linearly over temperature (in °C), then exponentiates. A simple, close approximation to the Arrhenius physics — exact only for an exponential in Celsius, so it carries a small residual between calibration points.",
+        create: (store) => new GeometricInterpolator(store),
     },
     linear: {
         key: "linear",

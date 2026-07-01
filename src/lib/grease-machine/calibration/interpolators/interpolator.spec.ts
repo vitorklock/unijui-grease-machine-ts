@@ -42,7 +42,7 @@ const ROWS = [
     { T: 35, flow: 29.0, L: 3.2, tau: 0.45 },
 ];
 
-/** A pure exponential in temperature (Arrhenius) — the case geometric nails. */
+/** A pure exponential in Celsius temperature — the case geometric nails exactly. */
 const EXP_FLOW = (T: number) => 0.2 * Math.exp(0.053 * (T - 20));
 const EXP_STORE = () =>
     buildStore([10, 20, 35].map((T) => ({ T, flow: EXP_FLOW(T), L: 0.6, tau: 10 })));
@@ -215,10 +215,10 @@ describe("interpolator registry", () => {
         expect(createInterpolator("linear", store).key).toBe("linear");
     });
 
-    it("lists an entry for every key, with geometric recommended as the best", () => {
+    it("lists an entry for every key, with arrhenius recommended as the best", () => {
         expect(INTERPOLATOR_LIST.map((e) => e.key)).toEqual([...INTERPOLATOR_KEYS]);
         const recommended = INTERPOLATOR_LIST.filter((e) => e.recommended);
         expect(recommended).toHaveLength(1);
-        expect(recommended[0].key).toBe("geometric");
+        expect(recommended[0].key).toBe("arrhenius");
     });
 });

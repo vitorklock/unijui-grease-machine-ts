@@ -1,9 +1,32 @@
+/** 0 °C in kelvin. */
+const KELVIN = 273.15;
+
 /**
  * Physics model of a thin, low-viscosity drip oil (the simulation's source of
  * truth). Flow rises with temperature; the steady (long-pulse) drip falls with
  * temperature; and drip loads up over the pulse duration toward that steady
  * limit. The calibration procedure samples this model; the controller never
  * sees it.
+ *
+ * Temperature dependence follows the Arrhenius–Andrade law: viscosity is
+ * exponential in INVERSE ABSOLUTE temperature (1/T in kelvin) — ln(μ) = A + B/T.
+ * Flow ≈ 1/μ (Hagen–Poiseuille), and the film/drain/fill timescales all scale
+ * with viscosity, so every quantity here is exp of a linear function of 1/T.
+ * This is the physically-canonical form for real oils over a wide temperature
+ * span, and it is why the Arrhenius interpolator is the EXACT fit for this
+ * ground truth while the geometric (log-in-Celsius) strategy carries a small
+ * residual (see the interpolators).
+ *
+ * The coefficients are reference-anchored: `baseX` is the value AT
+ * `referenceTemp`, and `flowCoeff`/`dripCoeff` are the LOCAL logarithmic
+ * sensitivity there (per °C). A quantity Q with signed sensitivity c is
+ *
+ *     Q(T) = baseQ · exp( c · T_refK² · (1/T_refK − 1/T_K) )     [T_K = T + 273.15]
+ *
+ * so Q(referenceTemp) = baseQ exactly and d(ln Q)/dT = c at the reference. This
+ * keeps the sourced ISO-3448 anchoring (baseFlow, ~5.3 %/°C near 20 °C) intact
+ * while giving the correct 1/T curvature away from the reference — the local
+ * temperature sensitivity grows as the oil cools, as real viscosity does.
  *
  * Default parameters are grounded in sourced data for ISO VG 32 light machine/
  * chain oil in 3 mm ID x 40 cm tubing:
@@ -22,11 +45,11 @@ export interface PhysicsConfig {
     baseFlow: number;
     /** Reference temperature, in °C. */
     referenceTemp: number;
-    /** Flow Arrhenius exponent, in 1/°C (flow ∝ exp(+flowCoeff·ΔT)). */
+    /** Flow log-sensitivity at referenceTemp, in 1/°C (local d(ln flow)/dT; flow rises with T). */
     flowCoeff: number;
     /** Steady (long-pulse) drip at the reference temperature, in grams. */
     baseDripLimit: number;
-    /** Drip Arrhenius exponent, in 1/°C (drip ∝ exp(−dripCoeff·ΔT)). */
+    /** Drip log-sensitivity at referenceTemp, in 1/°C (local d(ln drip)/dT; drip falls with T). */
     dripCoeff: number;
     /** Drip loading time constant at the reference temperature, in seconds. */
     baseTauLoad: number;
@@ -52,22 +75,31 @@ export class GreasePhysicsModel {
         this.config = { ...DEFAULT_PHYSICS, ...config };
     }
 
+    /**
+     * Arrhenius–Andrade factor for a quantity with signed local log-sensitivity
+     * `coeff` (per °C) at `referenceTemp`: exp of a linear function of 1/T in
+     * kelvin, normalized to 1 at the reference temperature. `coeff > 0` rises
+     * with temperature; `coeff < 0` falls with it.
+     */
+    private arrhenius(coeff: number, temperature: number): number {
+        const tRefK = this.config.referenceTemp + KELVIN;
+        const tK = temperature + KELVIN;
+        return Math.exp(coeff * tRefK * tRefK * (1 / tRefK - 1 / tK));
+    }
+
     /** Steady mass flow while the motor runs, in g/s. */
     flowRate(temperature: number): number {
-        const { baseFlow, referenceTemp, flowCoeff } = this.config;
-        return baseFlow * Math.exp(flowCoeff * (temperature - referenceTemp));
+        return this.config.baseFlow * this.arrhenius(this.config.flowCoeff, temperature);
     }
 
     /** Steady (long-pulse) drip limit at a temperature, in grams. */
     dripLimit(temperature: number): number {
-        const { baseDripLimit, referenceTemp, dripCoeff } = this.config;
-        return baseDripLimit * Math.exp(-dripCoeff * (temperature - referenceTemp));
+        return this.config.baseDripLimit * this.arrhenius(-this.config.dripCoeff, temperature);
     }
 
     /** Drip loading time constant — colder, more viscous oil charges slower. */
     tauLoad(temperature: number): number {
-        const { baseTauLoad, referenceTemp, flowCoeff } = this.config;
-        return baseTauLoad * Math.exp(-flowCoeff * (temperature - referenceTemp));
+        return this.config.baseTauLoad * this.arrhenius(-this.config.flowCoeff, temperature);
     }
 
     /** Total residual drip after a pulse of the given run duration, in grams. */
@@ -80,7 +112,6 @@ export class GreasePhysicsModel {
 
     /** Seconds for the drip to fully settle after the motor stops. */
     dripSettlingDuration(temperature: number): number {
-        const { baseSettle, referenceTemp, dripCoeff } = this.config;
-        return baseSettle * Math.exp(-dripCoeff * (temperature - referenceTemp));
+        return this.config.baseSettle * this.arrhenius(-this.config.dripCoeff, temperature);
     }
 }
